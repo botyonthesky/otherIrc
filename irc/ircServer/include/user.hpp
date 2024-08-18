@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/16 16:28:57 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/18 16:30:06 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,6 +85,7 @@ class user
                 // void            setOpchannel(bool op);
                 void            setNickname(std::string nickname);
                 void            registerChannel(std::string name, channel * channel);
+                int             checkChannel2(std::string name);
                 
                 channel*        channelUser[MAXCHANNEL];
                 channel*        getChannelByIdx(int idx);

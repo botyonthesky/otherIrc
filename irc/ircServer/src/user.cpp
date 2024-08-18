@@ -44,7 +44,7 @@ void    user::help()
                         "/NICK [nick name]                  change your nickname\n"
                         "/USER [user name]                  change your login\n"
                         "/JOIN [channel]                    join channel\n"
-                        "/PART                             leave current channel\n"
+                        "/PART                              leave current channel\n"
                         "/QUIT                              quit IRC\n"
                         "/WHO                               list of users in current channel\n"
                         "/MSG [nick name] [msg]             submit msg to login\n"
@@ -285,15 +285,26 @@ void    user::invite()
 
 void    user::topic()
 {
+
     if (!topicCommandCheck(_server.getCommand()[1]))
         return ;
-    // else
-
+    else
+    {
+        std::string channelName = _server.getCommand()[1];
+        std::string newTopic = _server.getCommand()[2];
+        channel * curr = getChannelByName(channelName);
+        curr->topic = newTopic;
+        curr->timestamp();
+        for (int i = 1; i <= curr->getNbUser(); i++)
+        {
+            _server.sendMessage(curr->getUserN(i), RPL_TOPIC, (channelName + " :" + newTopic));
+            _server.sendMessage(curr->getUserN(i), RPL_TOPICWHOTIME, (newTopic + " " + _nickname + " " + curr->createTime));
+        }
+    }
 }
 
 bool    user::topicCommandCheck(std::string channel)
 {
-    (void)channel;
     if (_server.getCommand().size() != 3)
     {
         _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
@@ -304,9 +315,13 @@ bool    user::topicCommandCheck(std::string channel)
         _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, " :You're not channel operator\r\n");
         return (false);
     }
+    if (checkChannel2(channel) == -1)
+    {
+        _server.sendMessage(this, ERR_NOSUCHCHANNEL, " :No such channel");
+        return (false);
+    }
     return (true);
 }
-
 
 void    user::createNewChannel(std::string name)
 {
@@ -341,6 +356,15 @@ void    user::joinChannel(std::string name)
 
 }
 
+int    user::checkChannel2(std::string name)
+{
+    for (int i = 1; i <= _server.getNbChannel(); i++)
+    {
+        if (_server.channelId[i]->getName() == name)
+            return (_server.channelId[i]->getIdx());
+    }
+    return (-1);
+}
 int    user::checkChannel()
 {
     for (int i = 1; i <= _server.getNbChannel(); i++)
@@ -396,17 +420,13 @@ bool    user::checkNicknameList(std::string nickname)
         for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
         {
             if (nickname == *it)
-            {
-                std::cout << "find nick name !" << std::endl;
                 return (true);
-            }
         }
     }   
     return (false);
 }
 bool    user::checkKickInfo()
 {
-    std::cout << "check kick" << std::endl;
     if (_server.getCommand().size() != 3)
     {
         _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
@@ -434,7 +454,6 @@ bool    user::checkKickInfo()
     }
     return (true);
 }
-
 
 void    user::registerChannel(std::string name, channel * channel)
 {
