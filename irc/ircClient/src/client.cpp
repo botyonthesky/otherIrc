@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:53 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/08 11:22:44 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/18 15:13:56 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ void    client::connectServer()
 
 void   client::handleMessage(void)
 {
-    if (_msg == "/quit")
+    if (_msg == "/QUIT")
         throw exitSocket();
 }
 
@@ -75,8 +75,6 @@ void    client::receivedMessage()
         {
             std::cout << "Connection closed by peer." << std::endl;
             exit(0);
-            
-            // break ;
         }
         else 
         {

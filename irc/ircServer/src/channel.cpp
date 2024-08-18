@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/16 18:05:51 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/18 15:42:53 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,17 +21,28 @@ channel::channel(user * user, std::string name) : _nbUsers(0)
         _idxUser = _nbUsers;
         _userN[_idxUser] = user;
         _nameOperator = user->getNick();
-        if(user->getNick()[0] != '@')
-            user->setNickname("@" + user->getNick());
-        topic = "General";
 
+        topic = "General";
+        timestamp();
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
     }
 }
+void	channel::timestamp()
+{
+    std::string real_time;
+    std::time_t now = std::time(0);
+    
+    std::tm* now_time = std::localtime(&now);
 
+    char buffer[100];
+    if (std::strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M%S", now_time))
+        createTime = buffer;
+    else
+        std::cout << "Error on timestamp" << std::endl;
+} 
 channel::~channel()
 {
 }

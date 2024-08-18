@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:16:40 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/16 18:20:35 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/18 15:32:15 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ class channel
 
         bool            isValidChannelName(std::string name);
         void            majIdxUserChannel(void);
+        void	        timestamp(void);
         std::string     getName(void);
         int             getIdx(void);
         int             getIdxUser(void);

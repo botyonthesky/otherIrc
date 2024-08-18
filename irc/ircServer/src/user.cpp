@@ -36,8 +36,8 @@ void    user::help()
         std::string msg = "\nSpecific operator commands ->\n"
                         "KICK [nick name] [channel]         eject an user of the channel\n"
                         "INVITE [nick name] [channel]       invite an user to the channel\n"
-                        "TOPIC [channel] [subject]          define subject as the topic of the channel";
-        _server.sendMessage(this, NOCODE, false, msg);
+                        "TOPIC [channel] [subject]          define subject as the topic of the channel\r\n";
+        _server.sendMessage(this, NOCODE, msg);
     }
     std::string msg = "\nBasic commands ->\n"
                         "/INFO                              display your information\n"
@@ -49,45 +49,45 @@ void    user::help()
                         "/WHO                               list of users in current channel\n"
                         "/MSG [nick name] [msg]             submit msg to login\n"
                         "/LIST                              list of channel\n"
-                        "[msg]                              send msg to current channel\n";
+                        "[msg]                              send msg to current channel\r\n";
 
-    _server.sendMessage(this, NOCODE, false, msg);
+    _server.sendMessage(this, NOCODE, msg);
 }
 
 void    user::info()
 {
-    std::string msg = "\nYour username is : " + _username + ".\nYour nickname is : "+ _nickname;
+    std::string msg = "\nYour username is : " + _username + ".\nYour nickname is : "+ _nickname + "\r\n";
     std::string channel;
     if (!_inChannel)
-        channel = "\nYou re not in any channel right now !\n";
+        channel = "\nYou re not in any channel right now !\r\n";
     else
-        channel = "\nYou re in the channel : " + _currChannel;
-    _server.sendMessage(this, NOCODE, false, msg + channel);
+        channel = "\nYou re in the channel : " + _currChannel + "\r\n";
+    _server.sendMessage(this, NOCODE, msg + channel);
 }
 
 void    user::nick()
 {
     if (_server.getCommand().size() != 2)
     {
-        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, false, ":Unknow command");
+        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, ":Unknow command\r\n");
         return ;
     }
     try
     {
         if (!isValidNickname(_server.getCommand()[1]))
         {
-            _server.sendMessage(this, ERR_ERRONEUSNICKNAME, false, ("Erroneous " + _server.getCommand()[1]));
+            _server.sendMessage(this, ERR_ERRONEUSNICKNAME, ("Erroneous " + _server.getCommand()[1] + "\r\n"));
             throw NotValidNickName();
         }
         std::string oldNick = _nickname;
         std::string newNick = _server.getCommand()[1];
         _server.updateNicknameList(oldNick, newNick);
-        std::string msg = "Your nickname was : " + oldNick + " its now : " + newNick;
+        std::string msg = "Your nickname was : " + oldNick + " its now : " + newNick + "\r\n";
         if (_nickname[0] == '@')
             _nickname = "@" + newNick;
         else
             _nickname = newNick;
-        _server.sendMessage(this, RPL_MYINFO, false, msg);
+        _server.sendMessage(this, RPL_MYINFO, msg);
         std::cout << oldNick << " has changed his nickname to : " << _nickname << std::endl;
     }
     catch(const std::exception& e)
@@ -100,22 +100,22 @@ void   user::userName()
 {
     if (_server.getCommand().size() != 2)
     {
-        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, false, ":Unknow command");
+        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, ":Unknow command\r\n");
         return ;
     }
     try
     {
         if (!isValidUsername(_server.getCommand()[1]))
         {
-            _server.sendMessage(this, ERR_ERRONEUSNICKNAME, false, ("Erroneous " + _server.getCommand()[1]));
+            _server.sendMessage(this, ERR_ERRONEUSNICKNAME, ("Erroneous " + _server.getCommand()[1] + "\r\n"));
             throw NotValidUserName();
         }
         std::string newName = _server.getCommand()[1];
         std::string oldName = _username;
         _server.updateLoginList(oldName, newName);
         _username = newName;
-        std::string msg = "You username was : " + oldName + ", it's now : " + newName;
-        _server.sendMessage(this, RPL_MYINFO, false, msg);
+        std::string msg = "You username was : " + oldName + ", it's now : " + newName + "\r\n";
+        _server.sendMessage(this, RPL_MYINFO, msg);
         std::cout << oldName << " has changed his username to : " << newName << std::endl;
     }
     catch(const std::exception& e)
@@ -128,7 +128,7 @@ void    user::join()
 {
     if (_server.getCommand().size() != 2)
     {
-        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, false, ":Unknow command");
+        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, ":Unknow command\r\n");
         return ;
     }
     std::string name = _server.getCommand()[1];
@@ -136,7 +136,7 @@ void    user::join()
     {
         if (!isValidChannelName(name))
         {
-            _server.sendMessage(this, ERR_NOSUCHCHANNEL, false, (name + " :Not such Channel \n"));
+            _server.sendMessage(this, ERR_NOSUCHCHANNEL, (name + " :Not such Channel\r\n"));
             throw NotValidChannelName();
         }
         if (_currChannel != "No channel")
@@ -156,8 +156,8 @@ void    user::leave()
 {
    if (_currChannel == "No channel")
     {
-        std::string msg = "Nochannel : You're not on that channel";
-        _server.sendMessage(this, ERR_NOTONCHANNEL, false, msg);
+        std::string msg = "Nochannel : You're not on that channel\r\n";
+        _server.sendMessage(this, ERR_NOTONCHANNEL, msg);
     }
     else
     {
@@ -167,7 +167,7 @@ void    user::leave()
         if (_nickname[0] == '@')
             setNickname(_nickname.erase(0, 1));
         _inChannel = false;
-        std::string msg = "PART " + _currChannel + " :Leaving the channel";
+        std::string msg = "PART " + _currChannel + " :Leaving the channel\r\n";
         for (int i = 1; i <= curr->getNbUser(); i++)
             _server.SendSpeMsg(this, curr->getUserN(i), msg);
         _server.checkChannel(_currChannel);
@@ -179,7 +179,7 @@ void    user::who()
 {
     std::string msg;
     if (!_inChannel)
-        _server.sendMessage(this, ERR_NOSUCKNICK, false, " :No such channel");
+        _server.sendMessage(this, ERR_NOSUCKNICK, ":No such channel\r\n");
     else
     {
         channel *curr = getChannelByName(_currChannel);
@@ -189,24 +189,17 @@ void    user::who()
      
             return ;
         }
-        // int nb = curr->getNbUser();
-        // msg = "\nYou are actually in the channel : " + _currChannel + "\nThere is " + toStr(nb) + " client(s) in this channel -> \n";
-        // if (curr->getNbUser() == 1)
-            // msg += "User : " + this->_nickname;
-        // else
-        // {
-            for (int i = 1; i <= curr->getNbUser(); i++)
-            {
-                std::string nick = curr->getUserN(i)->getNick();
-                std::string user = curr->getUserN(i)->getUsername();
-                std::string host = curr->getUserN(i)->getHostname();
-                std::string real = curr->getUserN(i)->getReal();
-                msg = _currChannel + " " + user + " " + host + " " + _server.name
-                + " " + nick + " :" + real + "\n";
-                _server.sendMessage(this, RPL_WHOREPLY, false, msg);
-            }
-            _server.sendMessage(this, RPL_ENDOFWHO, false, (_currChannel + " :End of WHO list"));
-        // }
+        for (int i = 1; i <= curr->getNbUser(); i++)
+        {
+            std::string nick = curr->getUserN(i)->getNick();
+            std::string user = curr->getUserN(i)->getUsername();
+            std::string host = curr->getUserN(i)->getHostname();
+            std::string real = curr->getUserN(i)->getReal();
+            msg = _currChannel + " " + user + " " + host + " " + _server.name
+            + " " + nick + " :" + real + "\r\n";
+            _server.sendMessage(this, RPL_WHOREPLY, msg);
+        }
+        _server.sendMessage(this, RPL_ENDOFWHO, (_currChannel + " :End of WHO list\r\n"));
     }
 }
 
@@ -216,23 +209,16 @@ void    user::msg()
     std::string message = _server.getCommand()[2];
     if (_server.getCommand().size() != 3)
     {
-        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, false, ":Unknow command");
+        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, ":Unknow command\r\n");
         return ;
     }
     else if (!checkNicknameList(nickname))
-        _server.sendMessage(this, ERR_NOSUCKNICK, false, "No such nick");
+        _server.sendMessage(this, ERR_NOSUCKNICK, "No such nick\r\n");
     else
     {
-        // std::cout << "else : " << std::endl; 
-        // int fdToSend = _server.getFdClientByNick(_server.getCommand()[1]);
-        // std::cout << "fd to send  : " << fdToSend << std::endl;
-        // _server.sendMessage(fdToSend, this->getNick(), _server.getCommand()[2]);
-        // std::string msg = " PRIVMSG " + nickname + " :" + message;
         user * toSend = _server.getUserByNickname(nickname);
-        std::string msg = ":" + _nickname + "!" + _username + "@" + _hostname
-        + " PRIVMSG " + nickname + " :" + message; 
+        std::string msg = "PRIVMSG " + nickname + " :" + message + "\r\n"; 
         _server.SendSpeMsg(this, toSend, msg);
-        
     }
 }
 
@@ -240,27 +226,23 @@ void    user::list()
 {
     std::string msg;
     if (_server.getNbChannel() == 0)
-        _server.sendMessage(this, RPL_LISTEND, false, " :End of LIST");
+        _server.sendMessage(this, RPL_LISTEND, " :End of LIST\r\n");
     else
     {      
-        // msg = "There is actually : " + toStr(_server.getNbChannel()) + " channel(s) =>\n";
-
         for (int i = 1; i <= _server.getNbChannel(); i++)
         {
             std::string name = _server.channelId[i]->getName();
             std::string topic = _server.channelId[i]->topic;
             std::string nbs = toStr(_server.channelId[i]->getNbUser());
-            msg += name + " " + nbs + " :" + topic + "\n";
-            _server.sendMessage(this, RPL_LIST, false, msg);
+            msg = name + " " + nbs + " :" + topic + "\r\n";
+            _server.sendMessage(this, RPL_LIST, msg);
         } 
-        _server.sendMessage(this, RPL_LISTEND, false, " :End of LIST");
+        _server.sendMessage(this, RPL_LISTEND, " :End of LIST\r\n");
     }
    }
 
 void    user::kick()
 {
-    // if (!checkUser())
-        // return ;
     if (!checkKickInfo())
         return ;
     else
@@ -272,11 +254,9 @@ void    user::kick()
         curr->delUserN(idx);
         toKick->_currChannel = "No channel";
         toKick->_inChannel = false;
-        std::string msg = "KICK " + _currChannel + " " + nameK;
+        std::string msg = "KICK " + _currChannel + " " + nameK + "\r\n";
         for (int i = 1; i <= curr->getNbUser(); i++)
             _server.SendSpeMsg(this, curr->getUserN(i), msg);
-        // _server.sendMessage(toKick->getClientFd(), "" , msg);
-        // std::cout << _server.getCommand()[1] << " left channel : " << _currChannel << std::endl;
         _server.checkChannel(_currChannel);
         _server.infoClient(toKick->getClientFd());
     }
@@ -296,8 +276,8 @@ void    user::invite()
             std::cout << "error on invite, tosend is null" << std::endl;
         else
         {
-            std::string msg = "INVITE" + nickTo + " :" + channelTo;
-            _server.sendMessage(this, RPL_INVITING, false, nickTo + " " + channelTo);
+            std::string msg = "INVITE " + nickTo + " :" + channelTo + "\r\n";
+            _server.sendMessage(this, RPL_INVITING, (nickTo + " " + channelTo + "\r\n"));
             _server.SendSpeMsg(this, toSend, msg);
         }
     }
@@ -316,12 +296,12 @@ bool    user::topicCommandCheck(std::string channel)
     (void)channel;
     if (_server.getCommand().size() != 3)
     {
-        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, false, " :Unknow command");
+        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
         return (false);
     }
     if (_nickname[0] != '@')
     {
-        _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, false, " :You're not channel operator");
+        _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, " :You're not channel operator\r\n");
         return (false);
     }
     return (true);
@@ -332,27 +312,22 @@ void    user::createNewChannel(std::string name)
 {
     channel *newChannel = new channel(this, name);
     _inChannel = true;
-    // std::cout << _nickname << " has created and join the channel : " << name << std::endl;
     _currChannel = name;
     _server.setNbChannel(1);
     newChannel->setIdx(_server.getNbChannel());
     _server.channelId[newChannel->getIdx()] = newChannel;
-    // std::string msg = "Channel created and joined : " + _currChannel;
-    _server.sendMessage(this, RPL_TOPIC, false, (name + " " +newChannel->topic));
-    clock_t time = clock();
-    std::string t = toStr(time);
-    newChannel->createTime = t;
-    _server.sendMessage(this, RPL_TOPICWHOTIME, false, (name + "" + t));
+    _server.sendMessage(this, RPL_TOPIC, (name + " " + newChannel->topic + "\r\n"));
+    std::string time = newChannel->createTime;
+    _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + time + "\r\n"));
     registerChannel(name, newChannel);
+    if(_nickname[0] != '@')
+        _nickname =  "@" + _nickname;
 }
 
 void    user::joinChannel(std::string name)
 {
     _inChannel = true;
-    // std::cout << _nickname << " has join the channel : " << _server.getCommand()[1] << std::endl;
     _currChannel = _server.getCommand()[1];
-    // std::string msg = "Channel joined : " + _currChannel;
-
     _server.channelId[checkChannel()]->setNbUser(1);
     registerChannel(name, _server.channelId[checkChannel()]);
     channel * curr = getChannelByName(name);
@@ -360,9 +335,9 @@ void    user::joinChannel(std::string name)
     curr->setUserN(this, idx);
     if (curr->getNameOperator() == _nickname)
         _nickname = "@" + _nickname;
-    _server.sendMessage(this, RPL_TOPIC, false, (name + curr->topic));
+    _server.sendMessage(this, RPL_TOPIC, (name + " " + curr->topic + "\r\n"));
     std::string op = curr->getNameOperator();
-    _server.sendMessage(this, RPL_TOPICWHOTIME, false, (name + " " + op + " " + curr->createTime));
+    _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + op + " " + curr->createTime + "\r\n"));
 
 }
 
@@ -379,22 +354,22 @@ bool    user::checkUser()
 {
     if (_server.getCommand().size() != 3)
     {
-        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, false, " :Unknow command");
+        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
         return (false);
     }
     if (_inChannel == false)
     {
-        _server.sendMessage(this, ERR_NOSUCHCHANNEL, false, (_server.getCommand()[2] + " :No such channel"));
+        _server.sendMessage(this, ERR_NOSUCHCHANNEL, (_server.getCommand()[2] + " :No such channel\r\n"));
         return (false);
     }
     if (_currChannel != _server.getCommand()[2])
     {
-        _server.sendMessage(this, ERR_NOTONCHANNEL, false, (_server.getCommand()[2] + " :You're not on that channel"));
+        _server.sendMessage(this, ERR_NOTONCHANNEL, (_server.getCommand()[2] + " :You're not on that channel\r\n"));
         return (false);
     }
     if (_nickname[0] != '@')
     {
-        _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, false, (_server.getCommand()[2] + " You're not channel operator"));
+        _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, (_server.getCommand()[2] + " You're not channel operator\r\n"));
         return (false);
     }
     return (true);
@@ -431,29 +406,30 @@ bool    user::checkNicknameList(std::string nickname)
 }
 bool    user::checkKickInfo()
 {
+    std::cout << "check kick" << std::endl;
     if (_server.getCommand().size() != 3)
     {
-        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, false, " :Unknow command");
+        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
         return (false);
     }
     if (_inChannel == false)
     {
-        _server.sendMessage(this, ERR_NOSUCHCHANNEL, false, (_server.getCommand()[2] + " :No such channel"));
+        _server.sendMessage(this, ERR_NOSUCHCHANNEL, (_server.getCommand()[2] + " :No such channel\r\n"));
         return (false);
     }
     if (_currChannel != _server.getCommand()[2])
     {
-        _server.sendMessage(this, ERR_NOTONCHANNEL, false, (_server.getCommand()[2] + " :You're not on that channel"));
+        _server.sendMessage(this, ERR_NOTONCHANNEL, (_server.getCommand()[2] + " :You're not on that channel\r\n"));
         return (false);
     }
     if (_nickname[0] != '@')
     {
-        _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, false, (_server.getCommand()[2] + " You're not channel operator"));
+        _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, (_server.getCommand()[2] + " You're not channel operator\r\n"));
         return (false);
     }
     if (!checkUserChannelList())
     {
-        _server.sendMessage(this, ERR_NOSUCKNICK, false, (_server.getCommand()[1] + " :no such nick"));
+        _server.sendMessage(this, ERR_NOSUCKNICK, (_server.getCommand()[1] + " :no such nick\r\n"));
         return (false);
     }
     return (true);
@@ -484,22 +460,22 @@ bool    user::inviteCommandCheck(std::string channel)
 {
     if (_server.getCommand().size() != 3)
     {
-        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, false, " :Unknow command");
+        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
         return (false);
     }
     if (channel != _currChannel)
     {
-        _server.sendMessage(this, ERR_NOTONCHANNEL, false, (channel + " :You're not on that channel"));
+        _server.sendMessage(this, ERR_NOTONCHANNEL, (channel + " :You're not on that channel\r\n"));
         return (false);
     }
     if (_nickname[0] != '@')
     {
-        _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, false, (channel + " :You're not channel operator"));
+        _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, (channel + " :You're not channel operator\r\n"));
         return (false);
     }
     if(!checkNicknameList(_server.getCommand()[1]))
     {
-        _server.sendMessage(this, ERR_NOSUCKNICK, false, (_server.getCommand()[1] + " : No such nick"));
+        _server.sendMessage(this, ERR_NOSUCKNICK, (_server.getCommand()[1] + " : No such nick\r\n"));
         return (false);
     }
     return (true);

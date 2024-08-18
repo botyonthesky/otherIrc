@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/16 18:36:39 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/18 15:53:43 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,7 @@ class server
         void    waitingClient(void);
         void    readingClient(int clientFd);
         bool    manageUserInfo(int clientFd, std::string input);
+        bool    manageNickInfo(int clienFd, std::string input);
         bool    manageUser(int clientFd, std::vector<std::string> command);
         bool    manageNick(int clientFd, std::string nickname);
 
@@ -83,7 +84,7 @@ class server
         user*   getUserByFd(int clientFd); 
         void    onlyOne(user * user, std::string input);
         void    manageMsg(int clientFd, std::string input);
-        void    sendMessage(user * user, int numCode, bool channelMsg, std::string message);
+        void    sendMessage(user * user, int numCode, std::string message);
         void    SendSpeMsg(user * userId, user * toSend, std::string msg);
         void    parsingMsg(user * user, std::string input);
         void    manageInput(user * user, std::string input);
@@ -101,7 +102,7 @@ class server
         void    quit(user *user);
 
         void    parsingCommand(std::string input);
-        void    printCmd(void);
+        void    printCmd(std::vector<std::string> command);
 
         void    printInfoNewUser(user *user);
         void    printInfoUsers(void);
