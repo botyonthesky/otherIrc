@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   user.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
+/*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/18 16:30:06 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/19 12:02:09 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ class user
     public:
 
                 user(server & srv, int clientFd, std::vector<std::string> command);
+                user(server & srv, int clientFd);
                 ~user();
 
 
@@ -60,6 +61,7 @@ class user
                 void            kick(void);
                 void            invite(void);
                 void            topic(void);
+                void            defTopic(void);
  
                 void            info(void);
                 void            who(void);
@@ -69,6 +71,8 @@ class user
                 void            leave(void);
 
                 void            speCommandOp(void);
+                std::string     mergeCommand(std::vector<std::string> command);
+
                 
                 int             getClientFd(void);
                 int             getIdx(void);

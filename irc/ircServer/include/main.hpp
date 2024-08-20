@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   main.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
+/*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/18 17:04:20 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/20 11:09:27 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef MAIN_HPP
 #define MAIN_HPP
 
+#include <cerrno>
 #include <poll.h>
 #include <netinet/in.h>
 #include <iostream>
@@ -29,6 +30,9 @@
 #include <cstring> 
 #include <sys/time.h>
 #include <ctime>
+#include <netinet/in.h>
+#include <netinet/tcp.h> // Pour TCP_NODELAY
+#include <arpa/inet.h>
 
 #include "server.hpp"
 #include "user.hpp"
@@ -37,7 +41,7 @@
 
 #define MAXCLIENT 10
 #define MAXCHANNEL 3
-#define PORT 4242
+#define PORT 4343
 
 #define RPL_WELCOME 001
 #define RPL_YOURHOST 002
@@ -69,6 +73,7 @@
 
 #define ERR_UNKNOWNCOMMAND 421
 
+#define RPL_NICK 431
 #define ERR_ERRONEUSNICKNAME 432
 #define ERR_NICKNAMEINUSE 433
 #define ERR_NOTONCHANNEL 442

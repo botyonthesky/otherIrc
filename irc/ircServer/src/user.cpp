@@ -12,12 +12,17 @@
 
 #include "../include/main.hpp"
 
+user::user(server & srv, int clientFd) : _server(srv), _clientFd(clientFd)
+{
+    
+}
+
 user::user(server& srv, int clientFd, std::vector<std::string> command) : _server(srv), _clientFd(clientFd), _inChannel(false)
 {
     std::cout << "User construct" << std::endl;
-    _username = command[1];
-    _hostname = command[3];
-    _realName = command[4];
+    _username = command[5];
+    _hostname = command[7];
+    _realName = command[9];
     _nickname = "";
     _currChannel = "No channel";
     _server.setLogin(_username);
@@ -56,7 +61,7 @@ void    user::help()
 
 void    user::info()
 {
-    std::string msg = "\nYour username is : " + _username + ".\nYour nickname is : "+ _nickname + "\r\n";
+    std::string msg = "\nYour username is : " + _username + "\nYour nickname is : "+ _nickname + "\r\n";
     std::string channel;
     if (!_inChannel)
         channel = "\nYou re not in any channel right now !\r\n";
@@ -283,15 +288,15 @@ void    user::invite()
     }
 }
 
-void    user::topic()
+void    user::defTopic()
 {
-
     if (!topicCommandCheck(_server.getCommand()[1]))
         return ;
-    else
+    else if (_server.getCommand().size() >= 3)
     {
         std::string channelName = _server.getCommand()[1];
-        std::string newTopic = _server.getCommand()[2];
+        // std::string newTopic = _server.getCommand()[2];
+        std::string newTopic = mergeCommand(_server.getCommand());
         channel * curr = getChannelByName(channelName);
         curr->topic = newTopic;
         curr->timestamp();
@@ -301,15 +306,37 @@ void    user::topic()
             _server.sendMessage(curr->getUserN(i), RPL_TOPICWHOTIME, (newTopic + " " + _nickname + " " + curr->createTime));
         }
     }
+    else
+    {
+        std::string channelName = _server.getCommand()[1];
+        channel * curr = getChannelByName(channelName);
+        (void)curr;
+        
+    }
+}
+
+std::string     user::mergeCommand(std::vector<std::string> command)
+{
+    std::string result;
+    for (std::vector<std::string>::iterator it = command.begin(); it != command.end(); it++)
+    {
+        result += (*it + " ");
+    }
+    return (result);
+}
+
+void    user::topic()
+{
+    std::cout << "topic" << std::endl;
 }
 
 bool    user::topicCommandCheck(std::string channel)
 {
-    if (_server.getCommand().size() != 3)
-    {
-        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
-        return (false);
-    }
+    // if (_server.getCommand().size() != 3 || _server.getCommand().size() != 2) 
+    // {
+    //     _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
+    //     return (false);
+    // }
     if (_nickname[0] != '@')
     {
         _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, " :You're not channel operator\r\n");

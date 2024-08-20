@@ -3,17 +3,17 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+         #
+#    By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/07/17 14:39:31 by botyonthesk       #+#    #+#              #
-#    Updated: 2024/08/16 18:32:52 by botyonthesk      ###   ########.fr        #
+#    Updated: 2024/08/20 09:05:22 by tmaillar         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME 			:= ircserv
 
 CXX				:= g++
-CXXFLAGS 		:= -std=c++11 -g -Wall -Wextra -Werror
+CXXFLAGS 		:= -std=c++98 -g -Wall -Wextra -Werror
 CPPFLAGS		+= -I./include
 CPPFLAGS		+= -MMD -MP -MF $(@:.o=.d)
 

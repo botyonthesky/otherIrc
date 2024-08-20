@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
+/*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/08 11:22:30 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/19 09:42:21 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@
 
 #define MAXCLIENT 10
 #define MAXCHANNEL 3
-#define PORT 4242
+#define PORT 4343
 
 
 #endif

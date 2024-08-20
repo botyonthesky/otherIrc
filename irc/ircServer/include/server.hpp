@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
+/*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/18 17:04:28 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/20 09:08:36 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,11 @@
 #define SERVER_HPP
 
 #include "../include/main.hpp"
+#include <fcntl.h>
 
 #define MAXCLIENT 10
 #define MAXCHANNEL 3
-#define PORT 4242
+#define PORT 4343
 
 class user;
 class channel;
@@ -34,6 +35,7 @@ class server
         int                         _status;
         int                         _bytesRead;
         std::vector<struct pollfd>  _pollFds;
+        // std::vector<pollfd> *         _pollFd;
 
         
         int                         _nbClient;
@@ -55,6 +57,7 @@ class server
         std::vector<std::string>    nicknameClient;
         std::string                 name;
 
+        void    waitingClient2();
         void    run(void);
         void    initServer(void);
         void    initSocket(void);

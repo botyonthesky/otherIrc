@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
+/*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 17:21:24 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/02 12:17:45 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/19 09:42:16 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 #include <cstdio>
 
 
-#define PORT 4242
+#define PORT 4343
 
 class client
 {

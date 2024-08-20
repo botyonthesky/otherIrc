@@ -47,6 +47,7 @@ void    server::initBind()
     _status = bind(_socketFd, (struct sockaddr *)&_sa, sizeof(_sa));
     if (_status != 0)
     {
+        std::cerr << "Error on bind: " << strerror(errno) << std::endl;
         close(_socketFd);
         initError ex("bind");
         throw ex;
@@ -158,11 +159,11 @@ void    server::sendMessage(user * user, int numCode, std::string message)
     if (numCode != NOCODE)
     {
         std::string sep = " ";
-        userMsg = name + sep + toStr(numCode) + sep + user->getNick() + sep + message;
+        userMsg = name + sep + toStr(numCode) + sep + user->getNick() + sep + message + "\r\n";
     }
     else
     {
-        userMsg = message;
+        userMsg = message + "\r\n";
     }
     int msgSize = userMsg.size();
     int bytesSend = send(user->getClientFd(), userMsg.c_str(), msgSize, 0);
@@ -180,9 +181,11 @@ void    server::sendMessage(user * user, int numCode, std::string message)
 void    server::manageInput(user * user, std::string input)
 {
     parsingCommand(input);
+    if (_command[0] == "PING")
+        sendMessage(user, NOCODE, "PONG");
     int i = 0;
     std::string call[7] = {"/NICK", "/USER", "/JOIN", "/MSG", "KICK", "INVITE", "TOPIC"};
-    void (user::*ptr[7])() = {&user::nick, &user::userName, &user::join, &user::msg, &user::kick, &user::invite, &user::topic};
+    void (user::*ptr[7])() = {&user::nick, &user::userName, &user::join, &user::msg, &user::kick, &user::invite, &user::defTopic};
     while (i < 7 && _command[0] != call[i])
         i++;
     if (i < 7)
@@ -202,11 +205,11 @@ void   server::onlyOne(user * user, std::string input)
     if(input == "alluser")
         printInfoUsers();
     int i = 0;
-    std::string call[5] = {"/INFO", "/HELP", "/WHO", "/LIST", "/PART"};
-    void (user::*ptr[5])() = {&user::info, &user::help, &user::who, &user::list, &user::leave};
-    while (i < 5 && input != call[i])
+    std::string call[6] = {"/INFO", "/HELP", "/WHO", "/LIST", "/PART", "TOPIC"};
+    void (user::*ptr[6])() = {&user::info, &user::help, &user::who, &user::list, &user::leave, &user::topic};
+    while (i < 6 && input != call[i])
         i++;
-    if (i < 5)
+    if (i < 6)
         (user->*ptr[i])();
     else
         msgToCurrent(user, input);
@@ -229,7 +232,7 @@ void    server::sendMsgToChanFromUser(channel * channel, user * user, std::strin
     while (i <= channel->getNbUser())
     {
         std::string from = user->getNick();
-        std::string msg = "<" + from + "> " + input;
+        std::string msg = "<" + from + "> " + input + "\r\n";
         sendMessage(channel->getUserN(i), NOCODE, msg);
         i++;
     }
@@ -288,7 +291,7 @@ void    server::manageMsg(int clientFd, std::string input)
     if (currUser != NULL)
     {
         parsingMsg(currUser, input);
-        if (input != "/QUIT")
+        if (input != "/QUIT\r\n")
             infoClient(currUser->getClientFd());
     }
     else
@@ -297,20 +300,59 @@ void    server::manageMsg(int clientFd, std::string input)
 bool    server::manageUserInfo(int clientFd, std::string input)
 {
     std::vector<std::string> command = parsingIntoVector(input);
-    if (command.size() != 5)
-        return (false);
-    else if (command[0] == "USER")
+    // if (command.size() != 5)
+        // return (false);
+    for (std::vector<std::string>::iterator it = command.begin(); it != command.end(); it++)
     {
-        if (manageUser(clientFd, command))
+        if (*it == "USER")
         {
-            sendForInfo(clientFd, "Username : You re now register\r\n"); 
-            return (true);
+            manageUser(clientFd, command);
         }
-        return (false);
     }
-    else
-        return (false);
+    for (std::vector<std::string>::iterator it = command.begin(); it != command.end(); it++)
+    {
+        if (*it == "NICK")
+        {
+            it++;
+            manageNick(clientFd, *it);
+        }
+    }
+    // // std::string msg = "Welcome to the network, " + getUserByFd(clientFd)->getNick() + "\r\n";
+    // sendMessage(getUserByFd(clientFd), RPL_WELCOME, msg);
+    printInfoNewUser(getUserByFd(clientFd));
+    _idxClient[_nbClient] = _nbClient;
+    infoClient(clientFd); 
+    return (true);
+    // if (command)
+    // if (command[0] == "USER")
+    // {
+    //     if (manageUser(clientFd, command))
+    //     {
+    //         sendForInfo(clientFd, "Username : You re now register\r\n"); 
+    //         return (true);
+    //     }
+    //     return (false);
+    // }
+    // else
+    //     return (false);
 }
+// bool    server::manageUserInfo(int clientFd, std::string input)
+// {
+//     std::vector<std::string> command = parsingIntoVector(input);
+//     if (command.size() != 5)
+//         return (false);
+//     else if (command[0] == "USER")
+//     {
+//         if (manageUser(clientFd, command))
+//         {
+//             sendForInfo(clientFd, "Username : You re now register\r\n"); 
+//             return (true);
+//         }
+//         return (false);
+//     }
+//     else
+//         return (false);
+// }
 
 bool    server::manageNickInfo(int clientFd, std::string input)
 {
@@ -332,36 +374,43 @@ bool    server::manageNickInfo(int clientFd, std::string input)
 
 bool    server::manageUser(int clientFd, std::vector<std::string> command) 
 {
-    if (!isValidUsername(command[1]))
-    {
-        std::string msg = name + " " + toStr(ERR_ERRONEUSNICKNAME) + " * " + ":Invalid " + command[1] + "\r\n";
-        sendForInfo(clientFd, msg);
-        return (false);
-    }
-    else
-    {
+    // if (!isValidUsername(command[1]))
+    // {
+    //     std::string msg = name + " " + toStr(ERR_ERRONEUSNICKNAME) + " * " + ":Invalid " + command[1] + "\r\n";
+    //     sendForInfo(clientFd, msg);
+    //     return (false);
+    // }
+    // else
+    // {
         user *newUser = new user(*this, clientFd, command);
         _nbClient++;
         newUser->setIdx(_nbClient);
         _userN[_nbClient] = newUser;
+        sendMessage(newUser, RPL_WELCOME, "Welcome to myIrc");
         return (true);
-    }
+    // }
 }
 
 bool        server::manageNick(int clientFd, std::string nickname)
 {
-    if (!isValidNickname(nickname))
-    {
-        std::string msg = name + " " + toStr(ERR_ERRONEUSNICKNAME) + " * " + ":Invalid " + nickname + "\r\n"; 
-        sendForInfo(clientFd, msg);
-        return (false);
-    }
-    else
-    {
-        getUserByFd(clientFd)->setNickname(nickname);
-        nicknameClient.push_back(nickname);       
+    // if (!isValidNickname(nickname))
+    // {
+    //     std::string msg = name + " " + toStr(ERR_ERRONEUSNICKNAME) + " * " + ":Invalid " + nickname + "\r\n"; 
+    //     sendForInfo(clientFd, msg);
+    //     return (false);
+    // }
+    // else
+    // {
+        if (getUserByFd(clientFd))
+        {
+            getUserByFd(clientFd)->setNickname(nickname);
+            nicknameClient.push_back(nickname); 
+            sendMessage(getUserByFd(clientFd), RPL_NICK, "Nickname register");
+        }
+        else
+            std::cout << "error on user/nick" << std::endl;
         return (true);
-    }
+    // }
 }
 
 
@@ -389,9 +438,9 @@ void    server::infoClient(int clientFd)
 }
 
 
-
 void    server::receptInfo(std::string input, int clientFd)
 {
+    std::cout << " recept info " << std::endl;
     if (input == "HELP")
         sendForInfo(clientFd, "USER [username] [hostname(unused)] [servername(unused)] [realname]\n      NICK [nickname]\r\n");
     else
@@ -400,6 +449,7 @@ void    server::receptInfo(std::string input, int clientFd)
         {
             if (!manageUserInfo(clientFd, input))
             {
+                std::cout << "info require in recept info " << std::endl;
                 infoRequired(clientFd);
                 return ;
             }
@@ -410,8 +460,8 @@ void    server::receptInfo(std::string input, int clientFd)
             infoRequired(clientFd);
         else
         {
-            std::string msg = "Welcome to the network, " + getUserByFd(clientFd)->getNick() + "\r\n";
-            sendMessage(getUserByFd(clientFd), RPL_WELCOME, msg);
+            // std::string msg = "Welcome to the network, " + getUserByFd(clientFd)->getNick() + "\r\n";
+            // sendMessage(getUserByFd(clientFd), RPL_WELCOME, msg);
             printInfoNewUser(getUserByFd(clientFd));
             _idxClient[_nbClient] = _nbClient;
             infoClient(clientFd); 
@@ -421,6 +471,7 @@ void    server::receptInfo(std::string input, int clientFd)
 
 void    server::infoRequired(int clientFd)
 {
+    std::cout << "info required" << std::endl;
     if (!getUserByFd(clientFd))
     {
         sendForInfo(clientFd, "Info Required : USER and NICK (type HELP for usage)\r\n");
@@ -432,8 +483,10 @@ void    server::infoRequired(int clientFd)
 
 void    server::readingClient(int clientFd)
 {
+    std::cout << "reading client" << std::endl;
     char buff[BUFSIZ] = {0};
     _bytesRead = recv(clientFd, buff, BUFSIZ - 1, 0);
+    std::cout << "buffer : " << buff << std::endl;
     std::string input = buff;
     if (_bytesRead == -1)    
     {
@@ -446,14 +499,18 @@ void    server::readingClient(int clientFd)
     {
         buff[_bytesRead] = '\0';
         std::string input(buff);
+        std::cout << "reading input else : " << input << std::endl;
         if (!getUserByFd(clientFd))
-        {
-            receptInfo(input, clientFd);
-            return;
-        }
+            manageUserInfo(clientFd, input);
+        // manageNickInfo(clientFd, input);
+        // if (!getUserByFd(clientFd))
+        // {
+        //     receptInfo(input, clientFd);
+        //     return;
+        // }
 
-        if (getUserByFd(clientFd)->getNick().empty())
-            receptInfo(input, clientFd);
+        // if (getUserByFd(clientFd)->getNick().empty())
+        //     receptInfo(input, clientFd);
         else
             manageMsg(clientFd, input);
     }
@@ -461,6 +518,7 @@ void    server::readingClient(int clientFd)
 
 void    server::handleClient(int clientFd)
 {
+    std::cout << "handle client" << std::endl;
     if (_nbClient >= MAXCLIENT)
     {
         std::cerr << "Max client reach" << std::endl;
@@ -471,7 +529,6 @@ void    server::handleClient(int clientFd)
     clientPollFd.events = POLLIN;
     _pollFds.push_back(clientPollFd);
     _clientFd = clientFd;
-    infoRequired(clientFd);
 }
 void    server::waitingClient()
 {
@@ -490,17 +547,26 @@ void    server::waitingClient()
             {
                 if (_pollFds[i].fd == _socketFd)
                 {
+                    std::cout << "new client trying" << std::endl;
                     _clientFd = accept(_socketFd, (struct sockaddr *)&_clienAddr, &_addrSize);
                     if (_clientFd == -1)
                     {
-                        initError ex("accept");
+                        initError ex("blabla");
                         throw ex;
                     }
                     std::cout << "New client connected, fd : " << _clientFd << std::endl;
+                    int flag = 1;
+                    if (setsockopt(_clientFd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int)) < 0)
+                    {
+                        std::cerr << "Error TCP" << std::endl;
+                        perror("setsockopt failed");
+                    }
                     handleClient(_clientFd);
                 }
                 else
+                {
                     readingClient(_pollFds[i].fd);
+                }
             }
         }
     }
@@ -728,7 +794,7 @@ void   server::printInfoNewUser(user *user)
 {
     std::cout << "there is a new client -> " << std::endl;
     std::cout << "Socket client : " <<  user->getClientFd() << std::endl
-            << "Login client : "  << user->getUsername() << std::endl 
+            << "Username client : "  << user->getUsername() << std::endl 
             << "Nickname client : " << user->getNick() << std::endl << std::endl;
 }
 
