@@ -12,12 +12,12 @@
 
 #include "../include/main.hpp"
 
-user::user(server & srv, int clientFd) : _server(srv), _clientFd(clientFd)
-{
+// user::user(server & srv, int clientFd) : _server(srv), _clientFd(clientFd)
+// {
     
-}
+// }
 
-user::user(server& srv, int clientFd, std::vector<std::string> command) : _server(srv), _clientFd(clientFd), _inChannel(false)
+user::user(server& srv, int clientFd, std::vector<std::string> command): _server(srv), _clientFd(clientFd), _inChannel(false)
 {
     std::cout << "User construct" << std::endl;
     _username = command[5];

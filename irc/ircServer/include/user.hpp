@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/19 12:02:09 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/21 12:40:39 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ class user
     public:
 
                 user(server & srv, int clientFd, std::vector<std::string> command);
-                user(server & srv, int clientFd);
+                // user(server & srv, int clientFd);
                 ~user();
 
 

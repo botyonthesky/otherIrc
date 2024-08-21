@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/20 11:09:27 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/21 10:29:17 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,9 +39,9 @@
 #include "channel.hpp"
 #include "utils.hpp"
 
-#define MAXCLIENT 10
-#define MAXCHANNEL 3
-#define PORT 4343
+// #define MAXCLIENT 10
+// #define MAXCHANNEL 3
+// #define PORT 4343
 
 #define RPL_WELCOME 001
 #define RPL_YOURHOST 002
@@ -67,6 +67,8 @@
 
 #define RPL_ENDOFNAMES 366
 
+#define RPL_ENDOFMOTD 376
+
 #define ERR_NOSUCKNICK 401
 #define ERR_CANNOTSENDTOCHAN 404
 #define ERR_NOSUCHCHANNEL 403
@@ -79,5 +81,7 @@
 #define ERR_NOTONCHANNEL 442
 
 #define ERR_CHANOPRIVSNEEDED 482
+
+        
 
 #endif 

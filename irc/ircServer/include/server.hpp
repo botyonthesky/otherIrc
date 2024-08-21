@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/20 09:08:36 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/21 12:38:59 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 
 #define MAXCLIENT 10
 #define MAXCHANNEL 3
-#define PORT 4343
+#define PORT 6667
 
 class user;
 class channel;
@@ -36,7 +36,8 @@ class server
         int                         _bytesRead;
         std::vector<struct pollfd>  _pollFds;
         // std::vector<pollfd> *         _pollFd;
-
+        std::string                 _pass;
+        bool                        _isPass;
         
         int                         _nbClient;
         int                         _idxClient[MAXCLIENT];
@@ -46,7 +47,8 @@ class server
         int                         _nbChannel;
 
         std::vector<std::string>    _command; 
-
+        bool                        _required;
+        bool                        _userinfo;
         
     public:
         
@@ -56,6 +58,11 @@ class server
         channel*                    channelId[MAXCHANNEL];
         std::vector<std::string>    nicknameClient;
         std::string                 name;
+
+        std::string                 _savenick;
+        std::string                 _saveuser;
+        std::string                 _savehost;
+        std::string                 _savereal;
 
         void    waitingClient2();
         void    run(void);
@@ -87,6 +94,12 @@ class server
         void    onlyOne(user * user, std::string input);
         void    manageMsg(int clientFd, std::string input);
         void    sendMessage(user * user, int numCode, std::string message);
+        void    readingClientFirst(int clientFd);
+        void    checkRequired(int clientFd, std::string input);
+        void    checkRequiredLS(int clientFd, std::string input);
+        void    checkRequiredREQ(int clientFd, std::string input);
+        void    welcome(int clientFd);
+
         void    SendSpeMsg(user * userId, user * toSend, std::string msg);
         void    parsingMsg(user * user, std::string input);
         void    manageInput(user * user, std::string input);
