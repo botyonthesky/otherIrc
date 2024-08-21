@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/21 12:38:59 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/21 14:22:48 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,9 @@ class server
         int                         _clientFd;
         int                         _status;
         int                         _bytesRead;
-        std::vector<struct pollfd>  _pollFds;
+        // std::vector<struct pollfd>  _pollFds;
+        struct pollfd               _fds[MAXCLIENT];
+        int                         _nfds;
         // std::vector<pollfd> *         _pollFd;
         std::string                 _pass;
         bool                        _isPass;

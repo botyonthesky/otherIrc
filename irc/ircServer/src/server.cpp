@@ -24,8 +24,11 @@ server::server() : _nbClient(0), _nbChannel(0)
 server::~server()
 {
     close(_socketFd);
-    for (size_t i = 0; i < _pollFds.size(); i++)
-        close(_pollFds[i].fd);
+    for (int i = 0; i < _nfds; i++)
+    {
+        close(_fds[i].fd);
+        _fds[i] = _fds[--_nfds];
+    }
     std::cout << "Server destructor" << std::endl;
 }
 
@@ -69,21 +72,22 @@ void    server::initListen()
     }
 }
 
-void    server::initPoll()
-{
-    struct pollfd serverPollFd;
-    serverPollFd.fd = _socketFd;
-    serverPollFd.events = POLLIN;
-    _pollFds.push_back(serverPollFd);
-}
+// void    server::initPoll()
+// {
+//     struct pollfd serverPollFd;
+//     serverPollFd.fd = _socketFd;
+//     serverPollFd.events = POLLIN;
+//     _pollFds.push_back(serverPollFd);
+// }
 void    server::closeFd(int clientFd)
 {
     close(clientFd);
-    for (size_t i = 0; i < _pollFds.size(); i++)
+    for (int i = 0; i < _nfds; i++)
     {
-        if (_pollFds[i].fd == clientFd)
+        if (_fds[i].fd == clientFd)
         {
-            _pollFds.erase(_pollFds.begin() + i);
+            // _pollFds.erase(_pollFds.begin() + i);
+            close(_fds[i].fd);
             break;
         }
     }
@@ -103,11 +107,12 @@ void    server::quit(user * user)
 {
     std::cout << "Now closing client : " << user->getUsername() << std::endl;
     close(user->getClientFd());
-    for (size_t i = 0; i < _pollFds.size(); i++)
+    for (int i = 0; i < _nfds; i++)
         {
-            if (_pollFds[i].fd == user->getClientFd())
+            if (_fds[i].fd == user->getClientFd())
             {
-                _pollFds.erase(_pollFds.begin() + i);
+                // _fds.erase(_pollFds.begin() + i);
+                std::cout << "to do !! " << std::endl;
                 break;
             }
         }
@@ -550,30 +555,29 @@ void    server::welcome(int clientFd)
 void server::handleClient(int clientFd) {
     const char *welcomeMsg = ":irc.example.com 001 Welcome to the Internet Relay Network\r\n";
     send(clientFd, welcomeMsg, strlen(welcomeMsg), 0);
+    
     // Additional IRC protocol messages can be sent here
 }
 
 void server::waitingClient() 
 {
-    struct pollfd fds[MAXCLIENT];
-    int nfds = 1;
-
-    fds[0].fd = _socketFd;
-    fds[0].events = POLLIN;
+    _nfds = 1;
+    _fds[0].fd = _socketFd;
+    _fds[0].events = POLLIN;
 
     while (true)
     {
-        int pollCount = poll(fds, nfds, -1);
+        int pollCount = poll(_fds, _nfds, -1);
         if (pollCount == -1)
         {
             std::cerr << "Error on poll: " << strerror(errno) << std::endl;
             break;
         }
-        for (int i = 0; i < nfds; ++i)
+        for (int i = 0; i < _nfds; ++i)
         {
-            if (fds[i].revents & POLLIN) 
+            if (_fds[i].revents & POLLIN) 
             {
-                if (fds[i].fd == _socketFd) 
+                if (_fds[i].fd == _socketFd) 
                 {
                     int clientFd = accept(_socketFd, NULL, NULL);
                     if (clientFd == -1) {
@@ -581,13 +585,13 @@ void server::waitingClient()
                         continue;
                     }
                     std::cout << "New client connected: " << clientFd << std::endl;
-                    // handleClient(clientFd);
+                    handleClient(clientFd);
                     welcome(clientFd);
-                    if (nfds < MAXCLIENT)
+                    if (_nfds < MAXCLIENT)
                     {
-                        fds[nfds].fd = clientFd;
-                        fds[nfds].events = POLLIN;
-                        nfds++;
+                        _fds[_nfds].fd = clientFd;
+                        _fds[_nfds].events = POLLIN;
+                        _nfds++;
                     }
                     else
                     {
@@ -597,25 +601,20 @@ void server::waitingClient()
                 }
                 else
                 {
+                    // readingClient2()
                     char buffer[512];
-                    int bytesRead = recv(fds[i].fd, buffer, sizeof(buffer), 0);
+                    int bytesRead = recv(_fds[i].fd, buffer, sizeof(buffer), 0);
                     if (bytesRead <= 0)
                     {
                         if (bytesRead == 0)
-                        {
-                            std::cout << "Client disconnected: " << fds[i].fd << std::endl;
-                        }
+                            std::cout << "Client disconnected: " << _fds[i].fd << std::endl;
                         else 
-                        {
                             std::cerr << "Error on recv: " << strerror(errno) << std::endl;
-                        }
-                        close(fds[i].fd);
-                        fds[i] = fds[--nfds];
+                        close(_fds[i].fd);
+                        _fds[i] = _fds[--_nfds];
                     }
                     else 
-                    {
-                        std::cout << "Received message from client " << fds[i].fd << ": " << std::string(buffer, bytesRead) << std::endl;
-                    }
+                        std::cout << "Received message from client " << _fds[i].fd << ": " << std::string(buffer, bytesRead) << std::endl;
                 }
             }
         }
@@ -693,7 +692,7 @@ void    server::run()
         std::cout << std::endl;
 
         initListen();
-        initPoll();
+        // initPoll();
         
         _addrSize = sizeof(_clienAddr);
         
