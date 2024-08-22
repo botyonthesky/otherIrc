@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/21 14:22:48 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/22 11:39:25 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,24 +34,26 @@ class server
         int                         _clientFd;
         int                         _status;
         int                         _bytesRead;
-        // std::vector<struct pollfd>  _pollFds;
         struct pollfd               _fds[MAXCLIENT];
         int                         _nfds;
-        // std::vector<pollfd> *         _pollFd;
-        std::string                 _pass;
-        bool                        _isPass;
         
+        std::string                 _pass;
+        std::string                 _createTime;
+        
+        bool                        _isPass;
+        bool                        _userinfo;
+        bool                        _required;
+
         int                         _nbClient;
+        int                         _nbChannel;
+
         int                         _idxClient[MAXCLIENT];
         user*                       _userN[MAXCLIENT];
         std::vector<std::string>    _loginClient;
-        
-        int                         _nbChannel;
-
         std::vector<std::string>    _command; 
-        bool                        _required;
-        bool                        _userinfo;
-        
+        std::map<int, std::string>  _partialMessages;
+        std::vector<std::string>    _infoUser;
+         
     public:
         
         server();
@@ -61,26 +63,21 @@ class server
         std::vector<std::string>    nicknameClient;
         std::string                 name;
 
-        std::string                 _savenick;
-        std::string                 _saveuser;
-        std::string                 _savehost;
-        std::string                 _savereal;
 
-        void    waitingClient2();
         void    run(void);
         void    initServer(void);
         void    initSocket(void);
         void    initBind(void);
         void    initListen(void);
-        void    initPoll(void);
 
         void    closeFd(int clientFd);
         void    recepMsg(std::string input, int clientFd, bool info);
         void    waitingClient(void);
-        void    readingClient(int clientFd);
+        void    readingClient(int i);
+        void    manageBuff(std::string input, int i);
         bool    manageUserInfo(int clientFd, std::string input);
         bool    manageNickInfo(int clienFd, std::string input);
-        bool    manageUser(int clientFd, std::vector<std::string> command);
+        bool    manageUser(int clientFd, std::string input);
         bool    manageNick(int clientFd, std::string nickname);
 
         bool    isValidUsername(std::string username);
@@ -88,18 +85,19 @@ class server
         void    infoRequired(int clientFd);
         void    handleClient(int clientFd);
         void    infoClient(int clientFd);
-        void    sendForInfo(int clientFd, std::string message);
+        void    sendForInfo(int clientFd, std::string code, std::string message);
         void    receptInfo(std::string input, int clientFd);
         void    readingInfo(int clientFd);
 
         user*   getUserByFd(int clientFd); 
         void    onlyOne(user * user, std::string input);
         void    manageMsg(int clientFd, std::string input);
-        void    sendMessage(user * user, int numCode, std::string message);
+        void    sendMessage(user * user, std::string numCode, std::string message);
         void    readingClientFirst(int clientFd);
         void    checkRequired(int clientFd, std::string input);
         void    checkRequiredLS(int clientFd, std::string input);
         void    checkRequiredREQ(int clientFd, std::string input);
+        void	timestamp();
         void    welcome(int clientFd);
 
         void    SendSpeMsg(user * userId, user * toSend, std::string msg);
@@ -130,7 +128,6 @@ class server
         void                        printChannelInfo(void);
         void                        printChannelInfoByChannel(std::string channelName);
 
-        // void                        decremChannelNbUser(std::string currChannel);
         void                        getNbUserInChannel(std::string currChannel);
         user*                       getUserByNickname(std::string nickname);
 

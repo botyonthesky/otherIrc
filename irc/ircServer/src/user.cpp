@@ -12,19 +12,10 @@
 
 #include "../include/main.hpp"
 
-// user::user(server & srv, int clientFd) : _server(srv), _clientFd(clientFd)
-// {
-    
-// }
-
 user::user(server& srv, int clientFd, std::vector<std::string> command): _server(srv), _clientFd(clientFd), _inChannel(false)
 {
     std::cout << "User construct" << std::endl;
-    _username = command[5];
-    _hostname = command[7];
-    _realName = command[9];
-    _nickname = "";
-    _currChannel = "No channel";
+    addInfo(command);
     _server.setLogin(_username);
 }
 
@@ -34,6 +25,46 @@ user::~user()
     std::cout << this->_username << " has quit the server" << std::endl;
 }
 
+void    user::addInfo(std::vector<std::string> command)
+{
+   for(size_t i = 0; i < command.size(); i++)
+   {
+        if (command[i].find_first_not_of("NICK") == 4)
+            processNick(command, i);
+        if (command[i].find_first_not_of("USER") == 4)
+            processUser(command, i);
+   }
+   _currChannel = "No channel";
+}
+
+void    user::processUser(std::vector<std::string> command, size_t& i)
+{
+    std::vector<std::string> info = _server.parsingIntoVector(command[i]);
+    _username = info[1];
+    _hostname = info[3];
+    _realName = extractRealName(info);
+}
+std::string    user::extractRealName(std::vector<std::string> info)
+{
+    std::string real = info[4];
+    size_t pos = real.find(':');
+    if (pos != std::string::npos)
+    {
+        real.erase(0, 1);
+        if (!info[5].empty())
+        {
+            real += " " + info[5];
+            return (real);
+        }
+    }
+    return (real);
+}
+void    user::processNick(std::vector<std::string> command, size_t& i)
+{
+    size_t pos = command[i].find(" ");
+    _nickname = command[i].substr(pos + 1, std::string::npos);
+    i++;
+}
 void    user::help()
 {
     if (this->_nickname[0] == '@')
@@ -61,7 +92,10 @@ void    user::help()
 
 void    user::info()
 {
-    std::string msg = "\nYour username is : " + _username + "\nYour nickname is : "+ _nickname + "\r\n";
+    std::string msg = "\nYour username is : " + _username +
+    "\nYour nickname is : " + _nickname +
+    "\nYour hostname is : " + _hostname +
+    "\nYour realname is : " + _realName;
     std::string channel;
     if (!_inChannel)
         channel = "\nYou re not in any channel right now !\r\n";
@@ -103,9 +137,9 @@ void    user::nick()
 
 void   user::userName()
 {
-    if (_server.getCommand().size() != 2)
+    if (_server.getCommand().size() != 5)
     {
-        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, ":Unknow command\r\n");
+        _server.sendMessage(this, ERR_NEEDMOREPARAMS, "USER :Not enough parameters");
         return ;
     }
     try
@@ -119,6 +153,8 @@ void   user::userName()
         std::string oldName = _username;
         _server.updateLoginList(oldName, newName);
         _username = newName;
+        _hostname = _server.getCommand()[2];
+        _realName = _server.getCommand()[4];
         std::string msg = "You username was : " + oldName + ", it's now : " + newName + "\r\n";
         _server.sendMessage(this, RPL_MYINFO, msg);
         std::cout << oldName << " has changed his username to : " << newName << std::endl;
@@ -176,6 +212,7 @@ void    user::leave()
         for (int i = 1; i <= curr->getNbUser(); i++)
             _server.SendSpeMsg(this, curr->getUserN(i), msg);
         _server.checkChannel(_currChannel);
+        _server.SendSpeMsg(this, this, ("PART " + _currChannel));
         _currChannel = "No channel";
     }
 }
@@ -201,7 +238,7 @@ void    user::who()
             std::string host = curr->getUserN(i)->getHostname();
             std::string real = curr->getUserN(i)->getReal();
             msg = _currChannel + " " + user + " " + host + " " + _server.name
-            + " " + nick + " :" + real + "\r\n";
+            + " " + nick + " :" + real;  
             _server.sendMessage(this, RPL_WHOREPLY, msg);
         }
         _server.sendMessage(this, RPL_ENDOFWHO, (_currChannel + " :End of WHO list\r\n"));
@@ -313,6 +350,17 @@ void    user::defTopic()
         (void)curr;
         
     }
+}
+void    user::ping()
+{
+    _server.sendMessage(this, NOCODE, ("PONG " + _server.name));
+}
+void    user::mode()
+{
+   if (_server.getCommand().size() != 3)
+   {
+        std::cout << "mode" << std::endl;
+   } 
 }
 
 std::string     user::mergeCommand(std::vector<std::string> command)

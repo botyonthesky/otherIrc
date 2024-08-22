@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/21 12:40:39 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/22 13:27:15 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,10 @@ class user
 
 
                 
+                void            addInfo(std::vector<std::string> command);
+                void            processUser(std::vector<std::string> command, size_t& i);
+                void            processNick(std::vector<std::string> command, size_t& i);
+                std::string     extractRealName(std::vector<std::string> info);
 
                 bool            isValidNickname(std::string nickname);
                 bool            isValidUsername(std::string username);
@@ -62,6 +66,9 @@ class user
                 void            invite(void);
                 void            topic(void);
                 void            defTopic(void);
+                void            mode(void);
+                void            ping(void);
+
  
                 void            info(void);
                 void            who(void);
