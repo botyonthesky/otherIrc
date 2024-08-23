@@ -51,7 +51,7 @@ std::string    user::extractRealName(std::vector<std::string> info)
     if (pos != std::string::npos)
     {
         real.erase(0, 1);
-        if (!info[5].empty())
+        if (info.size() > 5)
         {
             real += " " + info[5];
             return (real);
@@ -62,9 +62,11 @@ std::string    user::extractRealName(std::vector<std::string> info)
 void    user::processNick(std::vector<std::string> command, size_t& i)
 {
     size_t pos = command[i].find(" ");
-    _nickname = command[i].substr(pos + 1, std::string::npos);
+    if (pos != std::string::npos)
+        _nickname = command[i].substr(pos + 1);
     i++;
 }
+
 void    user::help()
 {
     if (this->_nickname[0] == '@')
@@ -244,23 +246,60 @@ void    user::who()
         _server.sendMessage(this, RPL_ENDOFWHO, (_currChannel + " :End of WHO list\r\n"));
     }
 }
+int     user::privOrChan(std::string input)
+{
+    if (input[0] == '&' || input[0] == '#')
+        return (2);
+    else
+        return (1);
+}
 
 void    user::msg()
 {
-    std::string nickname = _server.getCommand()[1];
-    std::string message = _server.getCommand()[2];
-    if (_server.getCommand().size() != 3)
+    int choice = privOrChan(_server.getCommand()[1]);
+    if (choice == 1)
     {
-        _server.sendMessage(this, ERR_UNKNOWNCOMMAND, ":Unknow command\r\n");
-        return ;
+        std::string nickname = _server.getCommand()[1];
+        std::string message;
+        for(size_t i = 2; i < _server.getCommand().size(); i++)
+        {
+            message += _server.getCommand()[i];
+            message += " ";
+        }
+        if (!checkNicknameList(nickname))
+            _server.sendMessage(this, ERR_NOSUCKNICK, "No such nick\r\n");
+        else
+        {
+            user * toSend = _server.getUserByNickname(nickname);
+            std::string msg = "PRIVMSG " + nickname + " :" + message; 
+            _server.SendSpeMsg(this, toSend, msg);
+        }
     }
-    else if (!checkNicknameList(nickname))
-        _server.sendMessage(this, ERR_NOSUCKNICK, "No such nick\r\n");
     else
     {
-        user * toSend = _server.getUserByNickname(nickname);
-        std::string msg = "PRIVMSG " + nickname + " :" + message + "\r\n"; 
-        _server.SendSpeMsg(this, toSend, msg);
+        std::string name = _server.getCommand()[1];
+        std::string message;
+        for(size_t i = 2; i < _server.getCommand().size(); i++)
+        {
+            message += _server.getCommand()[i];
+            message += " ";
+        }
+        if (!this->_inChannel)
+        {
+            _server.sendMessage(this, ERR_CANNOTSENDTOCHAN, (name + " :Cannot send to channel"));
+        }
+        else
+        {
+            channel * curr = getChannelByName(name);
+            if (curr == NULL)
+                return ;
+            if (_currChannel != name)
+            {
+                _server.sendMessage(this, ERR_NOTONCHANNEL, " :You're not on that channel");
+                return ;
+            }
+            _server.sendMsgToChanFromUser(curr, this, message);
+        }
     }
 }
 
@@ -428,9 +467,12 @@ void    user::joinChannel(std::string name)
     _server.sendMessage(this, RPL_TOPIC, (name + " " + curr->topic + "\r\n"));
     std::string op = curr->getNameOperator();
     _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + op + " " + curr->createTime + "\r\n"));
-
 }
+// void    user::privmsg()
+// {
 
+
+// }
 int    user::checkChannel2(std::string name)
 {
     for (int i = 1; i <= _server.getNbChannel(); i++)
@@ -542,6 +584,8 @@ void    user::registerChannel(std::string name, channel * channel)
 user*  user::findUserChannelByName(std::string name)
 {
     channel * curr = getChannelByName(_currChannel);
+    if (curr == NULL)
+        return (NULL);
     for (int i = 1; i <= curr->getNbUser(); i++)
     {
         if (curr->getUserN(i)->getNick() == name)
@@ -606,13 +650,30 @@ bool    user::isValidNickname(std::string nickname)
     return (true);
 }
 
-channel*     user::getChannelByName(std::string name)
+bool        user::isValidChannel(std::string name)
 {
     for (int i = 1; i <= _server.getNbChannel(); i++)
     {
         if (_server.channelId[i]->getName() == name)
-            return (channelUser[i]);
+            return (true);
     }
+    return (false);
+
+}
+
+channel*     user::getChannelByName(std::string name)
+{
+    if (isValidChannel(name))
+    {
+        for (int i = 1; i <= _server.getNbChannel(); i++)
+        {
+            if (_server.channelId[i]->getName() == name)
+                return (channelUser[i]);
+            _server.sendMessage(this, ERR_NOSUCHCHANNEL, (name + " :No such channel"));
+            return (NULL);
+        }
+    }
+    _server.sendMessage(this, ERR_NOSUCHCHANNEL, (name + " :No such channel"));
     return (NULL);
 }
 int             user::getClientFd(void)

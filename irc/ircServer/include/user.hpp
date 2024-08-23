@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/22 13:27:15 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/23 14:30:09 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,7 @@ class user
                 void            defTopic(void);
                 void            mode(void);
                 void            ping(void);
+                void            privmsg(void);
 
  
                 void            info(void);
@@ -79,6 +80,10 @@ class user
 
                 void            speCommandOp(void);
                 std::string     mergeCommand(std::vector<std::string> command);
+                int             privOrChan(std::string input);
+                bool            isValidChannel(std::string name);
+
+
 
                 
                 int             getClientFd(void);

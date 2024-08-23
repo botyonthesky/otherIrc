@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/22 14:23:32 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/23 14:42:22 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,16 +74,17 @@
 #define ERR_NOSUCKNICK "401"
 #define ERR_CANNOTSENDTOCHAN "404"
 #define ERR_NOSUCHCHANNEL "403"
+#define ERR_CANNOTSENDTOCHAN "404"
 
 #define ERR_UNKNOWNCOMMAND "421"
 
-#define RPL_NICK "431"
+#define ERR_NONICKNAMEGIVEN "431"
 #define ERR_ERRONEUSNICKNAME "432"
 #define ERR_NICKNAMEINUSE "433"
 #define ERR_NOTONCHANNEL "442"
 
 #define ERR_NEEDMOREPARAMS "461"
-
+#define ERR_PASSWDMISMATCH "464"
 #define ERR_CHANOPRIVSNEEDED "482"
 
         

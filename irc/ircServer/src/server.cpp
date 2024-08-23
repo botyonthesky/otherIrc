@@ -12,26 +12,40 @@
 
 #include "../include/main.hpp"
 
-server::server() : _nbClient(0), _nbChannel(0)
+server::server(std::string port, std::string password) : _port(port), _password(password), _nbClient(0), _nbChannel(0)
 {
     timestamp();
     name = "myIRC";
     _userinfo = false;
-    _isPass = false;
+    _checkPass = false;
     _required = false;
-    _pass = "1234";
 }
+
+// server::server() : _nbClient(0), _nbChannel(0)
+// {
+//     timestamp();
+//     name = "myIRC";
+//     _userinfo = false;
+//     _isPass = false;
+//     _required = false;
+//     _pass = "1234";
+// }
 
 
 server::~server()
 {
-    close(_socketFd);
+    std::cout << "Server destructor" << std::endl;
+    if (_socketFd != -1)
+    {
+        close(_socketFd);
+        _socketFd = -1;
+    }
     for (int i = 0; i < _nfds; i++)
     {
-        // close(_fds[i].fd);
-        // _fds[i] = _fds[--_nfds];
+
+        close(_fds[i].fd);
+        _fds[i].fd = -1;
     }
-    std::cout << "Server destructor" << std::endl;
 }
 
 void    server::initServer()
@@ -74,13 +88,6 @@ void    server::initListen()
     }
 }
 
-// void    server::initPoll()
-// {
-//     struct pollfd serverPollFd;
-//     serverPollFd.fd = _socketFd;
-//     serverPollFd.events = POLLIN;
-//     _pollFds.push_back(serverPollFd);
-// }
 void    server::closeFd(int clientFd)
 {
     close(clientFd);
@@ -88,8 +95,10 @@ void    server::closeFd(int clientFd)
     {
         if (_fds[i].fd == clientFd)
         {
-            // _pollFds.erase(_pollFds.begin() + i);
             close(_fds[i].fd);
+            for (int j = i; j < _nfds - 1; j++)
+                _fds[j] = _fds[j + 1];
+            _nfds--;
             break;
         }
     }
@@ -143,7 +152,7 @@ void    server::sendForInfo(int clientFd, std::string code, std::string message)
     if (code == NOCODE)
         msg = message;   
     else
-        msg = ":" + name + " " + code + "  " + message + "\r\n";
+        msg = ":" + name + " " + code + " " + message + "\r\n";
     msgSize = msg.size();
     int bytesSend = send(clientFd, msg.c_str(), msgSize, 0);
     if (bytesSend == -1)
@@ -182,12 +191,10 @@ void    server::sendMessage(user * user, std::string numCode, std::string messag
     if (numCode != NOCODE)
     {
         std::string sep = " ";
-        userMsg = ":" + name + sep + toStr(numCode) + sep + user->getNick() + sep + message + "\r\n";
+        userMsg = ":" + name + sep + numCode + sep + user->getNick() + sep + message + "\r\n";
     }
     else
-    {
         userMsg = message + "\r\n";
-    }
     int msgSize = userMsg.size();
     int bytesSend = send(user->getClientFd(), userMsg.c_str(), msgSize, 0);
     if (bytesSend == -1)
@@ -204,17 +211,12 @@ void    server::sendMessage(user * user, std::string numCode, std::string messag
 void    server::manageInput(user * user, std::string input)
 {
     parsingCommand(input);
-    // if (_command[0] == "PING")
-    // {
-    //     sendMessage(user, NOCODE, ("PONG " + name));
-    //     return ;
-    // }
     int i = 0;
-    std::string call[11] = {"NICK", "userhost", "JOIN", "MSG", "KICK",
+    std::string call[11] = {"NICK", "userhost", "JOIN", "PRIVMSG", "KICK",
     "INVITE", "TOPIC", "MODE", "PING", "PART", "WHO"};
     void (user::*ptr[11])() = {&user::nick, &user::userName, &user::join,
     &user::msg, &user::kick, &user::invite, &user::defTopic, &user::mode,
-    &user::ping, &user::leave, &user::who};
+    &user::ping, &user::leave, &user::who}; 
     while (i < 11 && _command[0] != call[i])
         i++;
     if (i < 11)
@@ -335,10 +337,19 @@ void    server::manageMsg(int clientFd, std::string input)
         std::cout << "curr User is null !!!!" << std::endl;
 }
 
+
 bool    server::manageUser(int clientFd, std::string input) 
 {
     if (input.find_first_not_of("NICK") == 4)
+    {
         _infoUser.push_back(input);
+        if (checkNick(_infoUser[0], clientFd) == false)
+        {
+            _infoUser.clear();
+            _required = false;
+            return (false);
+        }
+    }
     if (input.find_first_not_of("USER") == 4)
     {
         _infoUser.push_back(input);
@@ -357,6 +368,37 @@ bool    server::manageUser(int clientFd, std::string input)
     }
     else
         return (false);
+}
+
+bool    server::checkNick(std::string nickInfo, int clientFd)
+{
+    size_t pos = nickInfo.find(" ");
+    if (pos != std::string::npos)
+    {
+        std::string nickname = nickInfo.substr(pos + 1);
+        if (nickname.empty())
+        {
+            sendForInfo(clientFd, ERR_NONICKNAMEGIVEN, " :No nickname given");
+            return (false);
+        }
+        if (nickname.size() > 9)
+        {
+            sendForInfo(clientFd, ERR_ERRONEUSNICKNAME, (nickname + " :Erroneous nickname"));
+            return (false);
+        }
+        if (isValidNickname(nickname) == false)
+        {
+            sendForInfo(clientFd, ERR_NICKNAMEINUSE, (nickname + " :Nickname is already in use"));
+            return (false);
+        }
+    }
+    else
+    {
+        sendForInfo(clientFd, ERR_NONICKNAMEGIVEN, " :No nickname given");
+        return (false);
+    }
+
+    return (true);
 }
 
 
@@ -467,6 +509,30 @@ void        server::readingClient(int i)
         manageBuff(input, i);
     }
 }
+
+bool    server::checkPassword(int clientFd, std::string input)
+{
+    std::string password;
+    if (input.find_first_not_of("PASS") == 4)
+    {
+        size_t pos = input.find(" ");
+        if (pos != std::string::npos)
+            password = input.substr(pos + 1);       
+        if (password == _password)
+        {
+            _checkPass = true;
+            return (true);
+        }
+        else
+        {
+            sendForInfo(clientFd, ERR_PASSWDMISMATCH, "* :Password incorrect");
+            return (false);
+        }
+    }
+    else
+        return (false);
+    
+}
 void    server::manageBuff(std::string input, int i)
 {
     input = _partialMessages[_fds[i].fd] + input;
@@ -476,6 +542,11 @@ void    server::manageBuff(std::string input, int i)
     {
        std::string completeMsg = input.substr(0, pos);
        input.erase(0, pos + 2);
+        if (_checkPass == false)
+        {
+            if (checkPassword(_fds[i].fd, completeMsg) == false)
+                continue;
+        }
         if (_userinfo == false)
         {
             if (manageUser(_fds[i].fd, completeMsg) == false)
@@ -491,6 +562,7 @@ void    server::manageBuff(std::string input, int i)
         _partialMessages[_fds[i].fd] = input;
 
 }
+
 void    server::run()
 {
     try
@@ -515,33 +587,21 @@ void    server::run()
     }
 }
 
-void    server::delUserList(user * user)
+void    server::delUserList(user * userId)
 {
-    if (_loginClient.size() == 1)
-        _loginClient.pop_back();
-    else
+    for (std::vector<std::string>::iterator it = _loginClient.begin(); it != _loginClient.end();)
     {
-        for (std::vector<std::string>::iterator it = _loginClient.begin(); it != _loginClient.end(); it++)
-        {
-            if (*it == user->getUsername())
-            {
-                _loginClient.erase(it);
-                break;
-            }
-        }
+        if (*it == userId->getUsername())
+            it = _loginClient.erase(it);
+        else
+            it++;
     }
-    if (nicknameClient.size() == 1)
-        nicknameClient.pop_back();
-    else
+    for (std::vector<std::string>::iterator it = nicknameClient.begin(); it != nicknameClient.end(); )
     {
-        for (std::vector<std::string>::iterator it = nicknameClient.begin(); it != nicknameClient.end(); it++)
-        {
-            if (*it == user->getNick())
-            {
-                nicknameClient.erase(it);
-                break;
-            }
-        }
+        if (*it == userId->getNick())
+            it = nicknameClient.erase(it);
+        else
+            it++;
     }
 }
 

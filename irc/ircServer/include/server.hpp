@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/22 11:39:25 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/23 14:27:56 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,26 +37,27 @@ class server
         struct pollfd               _fds[MAXCLIENT];
         int                         _nfds;
         
-        std::string                 _pass;
+        std::string                 _port;
+        std::string                 _password;
         std::string                 _createTime;
         
-        bool                        _isPass;
+        bool                        _checkPass;
         bool                        _userinfo;
         bool                        _required;
 
         int                         _nbClient;
         int                         _nbChannel;
 
-        int                         _idxClient[MAXCLIENT];
-        user*                       _userN[MAXCLIENT];
-        std::vector<std::string>    _loginClient;
-        std::vector<std::string>    _command; 
-        std::map<int, std::string>  _partialMessages;
-        std::vector<std::string>    _infoUser;
+        int                                     _idxClient[MAXCLIENT];
+        user*                                   _userN[MAXCLIENT];
+        std::vector<std::string>                _loginClient;
+        std::vector<std::string>                _command; 
+        std::map<int, std::string>              _partialMessages;
+        std::vector<std::string>                _infoUser;
          
     public:
         
-        server();
+        server(std::string port, std::string password);
         ~server();
 
         channel*                    channelId[MAXCHANNEL];
@@ -71,6 +72,9 @@ class server
         void    initListen(void);
 
         void    closeFd(int clientFd);
+        void    infoRegister(std::string input, int i);
+
+        bool    checkPassword(int clientfd, std::string input);
         void    recepMsg(std::string input, int clientFd, bool info);
         void    waitingClient(void);
         void    readingClient(int i);
@@ -82,6 +86,8 @@ class server
 
         bool    isValidUsername(std::string username);
         bool    isValidNickname(std::string nickname);
+        bool    checkNick(std::string nickInfo, int clientFd);
+
         void    infoRequired(int clientFd);
         void    handleClient(int clientFd);
         void    infoClient(int clientFd);
@@ -95,8 +101,6 @@ class server
         void    sendMessage(user * user, std::string numCode, std::string message);
         void    readingClientFirst(int clientFd);
         void    checkRequired(int clientFd, std::string input);
-        void    checkRequiredLS(int clientFd, std::string input);
-        void    checkRequiredREQ(int clientFd, std::string input);
         void	timestamp();
         void    welcome(int clientFd);
 
@@ -109,7 +113,7 @@ class server
         void    updateNicknameList(std::string old, std::string nickname);
 
         void    printLoginList(void);
-        void    delUserList(user * user);
+        void    delUserList(user * userId);
         void    removeUser(int clientFd);
         void    sendMsgToChanFromUser(channel * channel, user * user, std::string input);
         int     getFdClientByNick(std::string nickname);

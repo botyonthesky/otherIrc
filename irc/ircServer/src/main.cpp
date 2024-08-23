@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
+/*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:45:13 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/10 12:12:11 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/23 09:06:51 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,12 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    server ircserv;
+    if (argc != 3)
+    {
+        std::cout << "Invalid argument. Usage : ./ircserv <port> <password>" << std::endl;
+        return (1);
+    }
+    server ircserv(argv[1], argv[2]);
     ircserv.run();       
     
     return (0);
