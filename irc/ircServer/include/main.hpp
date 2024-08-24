@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
+/*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/23 14:42:22 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/24 18:38:43 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,7 @@
 #define RPL_NAMREPLY "353"
 
 #define RPL_WHOREPLY "352"
+#define RPL_NAMREPLY "353"
 
 #define RPL_ENDOFNAMES "366"
 

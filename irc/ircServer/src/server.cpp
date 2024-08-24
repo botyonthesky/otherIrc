@@ -444,7 +444,7 @@ void server::handleClient(int clientFd)
 void    server::welcome(int clientFd)
 {
     std::string welcome = "Welcome to the Internet Relay Network";
-    std::string create = "This server was created : " + _createTime ;
+    std::string create = "This server was created the " + _createTime ;
     std::string info = ":" + name + " version : 1.0 iwso ov";
 
     sendMessage(getUserByFd(clientFd), RPL_WELCOME, welcome);
@@ -855,7 +855,16 @@ void	server::timestamp()
 
     char buffer[100];
     if (std::strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M%S", now_time))
-        _createTime = buffer;
+    {
+        std::string time = buffer;
+        std::string year = time.substr(0, 4);
+        std::string month = time.substr(4, 2);
+        std::string day = time.substr(6, 2);
+        std::string hour = time.substr(9, 2);
+        std::string minut = time.substr(11, 2);
+        std::string sec = time.substr(13, 2);
+        _createTime = (year + "/" + month + "/" + day + " at :" + hour + ":" + minut + ":" + sec);
+    }
     else
         std::cout << "Error on timestamp" << std::endl;
 }

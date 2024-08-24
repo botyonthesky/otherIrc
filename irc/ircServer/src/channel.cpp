@@ -6,7 +6,7 @@
 /*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/18 15:42:53 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/24 19:59:15 by botyonthesk      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,16 @@ void	channel::timestamp()
 
     char buffer[100];
     if (std::strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M%S", now_time))
-        createTime = buffer;
+    {
+        std::string time = buffer;
+        std::string year = time.substr(0, 4);
+        std::string month = time.substr(4, 2);
+        std::string day = time.substr(6, 2);
+        std::string hour = time.substr(9, 2);
+        std::string minut = time.substr(11, 2);
+        std::string sec = time.substr(13, 2);
+        createTime = (year + "/" + month + "/" + day + " at :" + hour + ":" + minut + ":" + sec);
+    }
     else
         std::cout << "Error on timestamp" << std::endl;
 } 
@@ -88,7 +97,6 @@ void        channel::setUserN(user * user, int idx)
 
 void        channel::delUserN(int idx)
 {
-    // std::cout << "del user" << std::endl;
     if (idx < 1 || idx > _nbUsers)
     {
         std::cout << "Invalid idx" << std::endl;
@@ -106,7 +114,6 @@ int     channel::getIdxUserByNickname(std::string nickname)
 {
     for (int i = 1; i <= getNbUser(); i++)
     {
-        // std::cout << "nb user : " << getNbUser() << " i = " << i << std::endl;
         if (_userN[i]->getNick() == nickname)
             return (i);
     }

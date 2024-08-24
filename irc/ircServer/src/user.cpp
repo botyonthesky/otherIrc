@@ -215,6 +215,8 @@ void    user::leave()
             _server.SendSpeMsg(this, curr->getUserN(i), msg);
         _server.checkChannel(_currChannel);
         _server.SendSpeMsg(this, this, ("PART " + _currChannel));
+        for (int i = 1; i <= curr->getNbUser(); i++)
+            _server.SendSpeMsg(this, curr->getUserN(i), "PART " + _currChannel);
         _currChannel = "No channel";
     }
 }
@@ -298,7 +300,10 @@ void    user::msg()
                 _server.sendMessage(this, ERR_NOTONCHANNEL, " :You're not on that channel");
                 return ;
             }
-            _server.sendMsgToChanFromUser(curr, this, message);
+            for (int i = 1; i <= curr->getNbUser(); i++)
+            {
+                _server.SendSpeMsg(this, curr->getUserN(i), ("PRIVMSG " + name + " " + message));
+            }
         }
     }
 }
@@ -371,7 +376,6 @@ void    user::defTopic()
     else if (_server.getCommand().size() >= 3)
     {
         std::string channelName = _server.getCommand()[1];
-        // std::string newTopic = _server.getCommand()[2];
         std::string newTopic = mergeCommand(_server.getCommand());
         channel * curr = getChannelByName(channelName);
         curr->topic = newTopic;
@@ -419,11 +423,6 @@ void    user::topic()
 
 bool    user::topicCommandCheck(std::string channel)
 {
-    // if (_server.getCommand().size() != 3 || _server.getCommand().size() != 2) 
-    // {
-    //     _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
-    //     return (false);
-    // }
     if (_nickname[0] != '@')
     {
         _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, " :You're not channel operator\r\n");
@@ -445,9 +444,11 @@ void    user::createNewChannel(std::string name)
     _server.setNbChannel(1);
     newChannel->setIdx(_server.getNbChannel());
     _server.channelId[newChannel->getIdx()] = newChannel;
-    _server.sendMessage(this, RPL_TOPIC, (name + " " + newChannel->topic + "\r\n"));
+    _server.sendMessage(this, RPL_TOPIC, (name + " " + newChannel->topic));
     std::string time = newChannel->createTime;
-    _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + time + "\r\n"));
+    _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + time));
+    _server.sendMessage(this, RPL_NAMREPLY, ("= " + name + " :@" + this->getNick()));
+    _server.sendMessage(this, RPL_ENDOFNAMES, (name + " :End of /NAMES list"));
     registerChannel(name, newChannel);
     if(_nickname[0] != '@')
         _nickname =  "@" + _nickname;
@@ -467,6 +468,10 @@ void    user::joinChannel(std::string name)
     _server.sendMessage(this, RPL_TOPIC, (name + " " + curr->topic + "\r\n"));
     std::string op = curr->getNameOperator();
     _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + op + " " + curr->createTime + "\r\n"));
+    _server.sendMessage(this, RPL_NAMREPLY, ("= " + name + " :" + curr->getNameOperator() + this->getNick()));
+    for (int i = 1; i <= curr->getNbUser(); i++)
+        _server.SendSpeMsg(this, curr->getUserN(i), ("JOIN :" + name));
+
 }
 // void    user::privmsg()
 // {
