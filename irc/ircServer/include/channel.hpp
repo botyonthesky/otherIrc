@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
+/*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:16:40 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/18 15:32:15 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/26 10:12:55 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

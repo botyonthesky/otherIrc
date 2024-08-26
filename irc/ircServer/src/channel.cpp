@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
+/*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/24 19:59:15 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/26 10:20:59 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,23 +34,7 @@ void	channel::timestamp()
 {
     std::string real_time;
     std::time_t now = std::time(0);
-    
-    std::tm* now_time = std::localtime(&now);
-
-    char buffer[100];
-    if (std::strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M%S", now_time))
-    {
-        std::string time = buffer;
-        std::string year = time.substr(0, 4);
-        std::string month = time.substr(4, 2);
-        std::string day = time.substr(6, 2);
-        std::string hour = time.substr(9, 2);
-        std::string minut = time.substr(11, 2);
-        std::string sec = time.substr(13, 2);
-        createTime = (year + "/" + month + "/" + day + " at :" + hour + ":" + minut + ":" + sec);
-    }
-    else
-        std::cout << "Error on timestamp" << std::endl;
+    createTime = toStr(now);
 } 
 channel::~channel()
 {

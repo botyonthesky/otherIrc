@@ -14,7 +14,7 @@
 
 user::user(server& srv, int clientFd, std::vector<std::string> command): _server(srv), _clientFd(clientFd), _inChannel(false)
 {
-    std::cout << "User construct" << std::endl;
+    // std::cout << "User construct" << std::endl;
     addInfo(command);
     _server.setLogin(_username);
 }
@@ -29,9 +29,9 @@ void    user::addInfo(std::vector<std::string> command)
 {
    for(size_t i = 0; i < command.size(); i++)
    {
-        if (command[i].find_first_not_of("NICK") == 4)
+        if (command[i].find("NICK") == 0)
             processNick(command, i);
-        if (command[i].find_first_not_of("USER") == 4)
+        if (command[i].find("USER") == 0)
             processUser(command, i);
    }
    _currChannel = "No channel";
@@ -64,6 +64,8 @@ void    user::processNick(std::vector<std::string> command, size_t& i)
     size_t pos = command[i].find(" ");
     if (pos != std::string::npos)
         _nickname = command[i].substr(pos + 1);
+    if (isValidNickname(_nickname) == false)
+        _nickname = _nickname + toStr(_clientFd);
     i++;
 }
 
@@ -406,10 +408,10 @@ void    user::ping()
 }
 void    user::mode()
 {
-   if (_server.getCommand().size() != 3)
-   {
-        std::cout << "mode" << std::endl;
-   } 
+//    if (_server.getCommand().size() != 3)
+//    {
+//         std::cout << "mode" << std::endl;
+//    } 
 }
 
 std::string     user::mergeCommand(std::vector<std::string> command)
@@ -452,7 +454,8 @@ void    user::createNewChannel(std::string name)
     _server.channelId[newChannel->getIdx()] = newChannel;
     _server.sendMessage(this, RPL_TOPIC, (name + " " + newChannel->topic));
     std::string time = newChannel->createTime;
-    _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + time));
+    _server.groupMsg(this, RPL_TOPICWHOTIME, newChannel, "test");
+    // _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + this->getNick() + " " + time));
     _server.sendMessage(this, RPL_NAMREPLY, ("= " + name + " :@" + this->getNick()));
     _server.sendMessage(this, RPL_ENDOFNAMES, (name + " :End of /NAMES list"));
     registerChannel(name, newChannel);
@@ -473,17 +476,14 @@ void    user::joinChannel(std::string name)
         _nickname = "@" + _nickname;
     _server.sendMessage(this, RPL_TOPIC, (name + " " + curr->topic + "\r\n"));
     std::string op = curr->getNameOperator();
+    _server.groupMsg(this, RPL_TOPICWHOTIME, curr, "test");
     _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + op + " " + curr->createTime + "\r\n"));
     _server.sendMessage(this, RPL_NAMREPLY, ("= " + name + " :" + curr->getNameOperator() + this->getNick()));
     for (int i = 1; i <= curr->getNbUser(); i++)
         _server.SendSpeMsg(this, curr->getUserN(i), ("JOIN :" + name));
 
 }
-// void    user::privmsg()
-// {
 
-
-// }
 int    user::checkChannel2(std::string name)
 {
     for (int i = 1; i <= _server.getNbChannel(); i++)
@@ -540,17 +540,6 @@ bool    user::checkUserChannelList(std::string nickname)
 
 bool    user::checkNicknameList(std::string nickname)
 {
-    // std::vector<std::string> tmp = _server.nicknameClient;
-    // if (tmp.size() == 1)
-    //     return (false);
-    // else
-    // {
-    //     for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
-    //     {
-    //         if (nickname == *it)
-    //             return (true);
-    //     }
-    // }   
     for (int i = 1; i <= _server.getNbClient(); i++)
     {
         if (_server.getUserN(i)->getNick() == nickname)
