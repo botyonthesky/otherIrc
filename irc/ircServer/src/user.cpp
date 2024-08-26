@@ -303,6 +303,7 @@ void    user::msg()
             for (int i = 1; i <= curr->getNbUser(); i++)
             {
                 _server.SendSpeMsg(this, curr->getUserN(i), ("PRIVMSG " + name + " " + message));
+                
             }
         }
     }

@@ -313,6 +313,7 @@ std::vector<std::string>    server::parsingIntoVector(std::string input)
     }
     command.push_back(input.substr(start));
     return (command);
+    
 }
 void    server::manageMsg(int clientFd, std::string input)
 {
