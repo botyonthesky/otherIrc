@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: botyonthesky <botyonthesky@student.42.f    +#+  +:+       +#+        */
+/*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/24 18:38:43 by botyonthesk      ###   ########.fr       */
+/*   Updated: 2024/08/26 09:03:02 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,10 @@
 #define ERR_NONICKNAMEGIVEN "431"
 #define ERR_ERRONEUSNICKNAME "432"
 #define ERR_NICKNAMEINUSE "433"
+
+
 #define ERR_NOTONCHANNEL "442"
+#define ERR_USERONCHANNEL "443"
 
 #define ERR_NEEDMOREPARAMS "461"
 #define ERR_PASSWDMISMATCH "464"

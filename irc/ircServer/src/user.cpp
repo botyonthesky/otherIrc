@@ -287,9 +287,7 @@ void    user::msg()
             message += " ";
         }
         if (!this->_inChannel)
-        {
             _server.sendMessage(this, ERR_CANNOTSENDTOCHAN, (name + " :Cannot send to channel"));
-        }
         else
         {
             channel * curr = getChannelByName(name);
@@ -301,10 +299,7 @@ void    user::msg()
                 return ;
             }
             for (int i = 1; i <= curr->getNbUser(); i++)
-            {
                 _server.SendSpeMsg(this, curr->getUserN(i), ("PRIVMSG " + name + " " + message));
-                
-            }
         }
     }
 }
@@ -334,10 +329,20 @@ void    user::kick()
         return ;
     else
     {
-        std::string nameK = _server.getCommand()[1];
+        std::string nameK = _server.getCommand()[2];
         user * toKick = findUserChannelByName(nameK);
+        if (toKick == NULL)
+        {
+            std::cout << "User is null" << std::endl;
+            return ;
+        }
         channel * curr = getChannelByName(_currChannel);
         int idx = curr->getIdxUserByNickname(nameK);
+        if (idx == -1)
+        {
+            std::cout << "Wrong idx" << std::endl;
+            return ;
+        }
         curr->delUserN(idx);
         toKick->_currChannel = "No channel";
         toKick->_inChannel = false;
@@ -521,12 +526,12 @@ bool    user::checkUser()
     }
     return (true);
 }
-bool    user::checkUserChannelList()
+bool    user::checkUserChannelList(std::string nickname)
 {
     channel * curr = getChannelByName(_currChannel);
     for (int i = 1; i <= curr->getNbUser(); i++)
     {
-        if (curr->getUserN(i)->getNick() == _server.getCommand()[1])
+        if (curr->getUserN(i)->getNick() == nickname)
             return (true);
     }
     return (false);
@@ -535,22 +540,29 @@ bool    user::checkUserChannelList()
 
 bool    user::checkNicknameList(std::string nickname)
 {
-    std::vector<std::string> tmp = _server.nicknameClient;
-    if (tmp.size() == 1)
-        return (false);
-    else
+    // std::vector<std::string> tmp = _server.nicknameClient;
+    // if (tmp.size() == 1)
+    //     return (false);
+    // else
+    // {
+    //     for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
+    //     {
+    //         if (nickname == *it)
+    //             return (true);
+    //     }
+    // }   
+    for (int i = 1; i <= _server.getNbClient(); i++)
     {
-        for (std::vector<std::string>::iterator it = tmp.begin(); it != tmp.end(); it++)
-        {
-            if (nickname == *it)
-                return (true);
-        }
-    }   
+        if (_server.getUserN(i)->getNick() == nickname)
+            return (true);
+    }
     return (false);
 }
 bool    user::checkKickInfo()
 {
-    if (_server.getCommand().size() != 3)
+    std::string channel = _server.getCommand()[3].erase(0,1);
+    std::string toKick = _server.getCommand()[2];
+    if (_server.getCommand().size() != 4)
     {
         _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
         return (false);
@@ -560,7 +572,7 @@ bool    user::checkKickInfo()
         _server.sendMessage(this, ERR_NOSUCHCHANNEL, (_server.getCommand()[2] + " :No such channel\r\n"));
         return (false);
     }
-    if (_currChannel != _server.getCommand()[2])
+    if (_currChannel != channel)
     {
         _server.sendMessage(this, ERR_NOTONCHANNEL, (_server.getCommand()[2] + " :You're not on that channel\r\n"));
         return (false);
@@ -570,7 +582,7 @@ bool    user::checkKickInfo()
         _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, (_server.getCommand()[2] + " You're not channel operator\r\n"));
         return (false);
     }
-    if (!checkUserChannelList())
+    if (!checkUserChannelList(toKick))
     {
         _server.sendMessage(this, ERR_NOSUCKNICK, (_server.getCommand()[1] + " :no such nick\r\n"));
         return (false);
@@ -602,24 +614,30 @@ user*  user::findUserChannelByName(std::string name)
 
 bool    user::inviteCommandCheck(std::string channel)
 {
+    std::string toInvit = _server.getCommand()[1];
     if (_server.getCommand().size() != 3)
     {
         _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
         return (false);
     }
-    if (channel != _currChannel)
-    {
-        _server.sendMessage(this, ERR_NOTONCHANNEL, (channel + " :You're not on that channel\r\n"));
-        return (false);
-    }
+    // if (channel != _currChannel)
+    // {
+    //     _server.sendMessage(this, ERR_NOTONCHANNEL, (channel + " :You're not on that channel\r\n"));
+    //     return (false);
+    // }
     if (_nickname[0] != '@')
     {
         _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, (channel + " :You're not channel operator\r\n"));
         return (false);
     }
-    if(!checkNicknameList(_server.getCommand()[1]))
+    if(!checkNicknameList(toInvit))
     {
-        _server.sendMessage(this, ERR_NOSUCKNICK, (_server.getCommand()[1] + " : No such nick\r\n"));
+        _server.sendMessage(this, ERR_NOSUCKNICK, (toInvit + " : No such nick\r\n"));
+        return (false);
+    }
+    if (checkUserChannelList(toInvit))
+    {
+        _server.sendMessage(this, ERR_USERONCHANNEL, (toInvit + " " + channel + " :is already on channel"));
         return (false);
     }
     return (true);

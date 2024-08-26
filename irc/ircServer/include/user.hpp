@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/23 14:30:09 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/26 08:42:52 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ class user
                 int             checkChannel(void);
                 bool            checkUser(void);
                 bool            checkKickInfo(void);
-                bool            checkUserChannelList(void);
+                bool            checkUserChannelList(std::string nickname);
                 user*           findUserChannelByName(std::string name);
 
                 void            userName(void);

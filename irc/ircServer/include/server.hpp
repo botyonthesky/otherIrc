@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/23 14:27:56 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/26 09:11:03 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,6 +96,7 @@ class server
         void    readingInfo(int clientFd);
 
         user*   getUserByFd(int clientFd); 
+        user*   getUserN(int idx);
         void    onlyOne(user * user, std::string input);
         void    manageMsg(int clientFd, std::string input);
         void    sendMessage(user * user, std::string numCode, std::string message);

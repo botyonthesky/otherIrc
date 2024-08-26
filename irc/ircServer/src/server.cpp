@@ -231,8 +231,8 @@ void   server::onlyOne(user * user, std::string input)
         quit(user);
     if (input == "channel")
         printChannelInfo();
-    if (input == "user")
-        user->checkUserChannelList();
+    // if (input == "user")
+        // user->checkUserChannelList();
     if(input == "alluser")
         printInfoUsers();
     int i = 0;
@@ -341,7 +341,7 @@ void    server::manageMsg(int clientFd, std::string input)
 
 bool    server::manageUser(int clientFd, std::string input) 
 {
-    if (input.find_first_not_of("NICK") == 4)
+    if (input.find("NICK") == 0)
     {
         _infoUser.push_back(input);
         if (checkNick(_infoUser[0], clientFd) == false)
@@ -365,6 +365,7 @@ bool    server::manageUser(int clientFd, std::string input)
         _userinfo = true;
         welcome(clientFd);
         _required = false;
+        // _checkPass = false;
         return (true);
     }
     else
@@ -434,6 +435,8 @@ void server::handleClient(int clientFd)
         _fds[_nfds].events = POLLIN;
         _nfds++;
         _userinfo = false;
+        _checkPass = false;
+        _required =  false;
     }
     else
     {
@@ -514,11 +517,9 @@ void        server::readingClient(int i)
 bool    server::checkPassword(int clientFd, std::string input)
 {
     std::string password;
-    if (input.find_first_not_of("PASS") == 4)
+    if (input.find("PASS") == 0)
     {
-        size_t pos = input.find(" ");
-        if (pos != std::string::npos)
-            password = input.substr(pos + 1);       
+        password = input.substr(5);
         if (password == _password)
         {
             _checkPass = true;
@@ -747,7 +748,10 @@ std::vector<std::string>  server::getLogin()
 {
     return (_loginClient);
 }
-
+user*       server::getUserN(int idx)
+{
+   return (_userN[idx]);
+}
 void    server::setLogin(std::string login)
 {
     _loginClient.push_back(login);
