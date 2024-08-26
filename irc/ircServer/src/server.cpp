@@ -19,7 +19,6 @@ server::server(std::string port, std::string password) : _port(port), _password(
     _userinfo = false;
     _checkPass = false;
     _required = false;
-    _wrongNick = false;
 }
 
 server::~server()
@@ -228,14 +227,14 @@ void    server::manageInput(user * user, std::string input)
 {
     parsingCommand(input);
     int i = 0;
-    std::string call[11] = {"NICK", "userhost", "JOIN", "PRIVMSG", "KICK",
-    "INVITE", "TOPIC", "MODE", "PING", "PART", "WHO"};
-    void (user::*ptr[11])() = {&user::nick, &user::userName, &user::join,
+    std::string call[12] = {"NICK", "userhost", "JOIN", "PRIVMSG", "KICK",
+    "INVITE", "TOPIC", "MODE", "PING", "PART", "WHO", "LIST"};
+    void (user::*ptr[12])() = {&user::nick, &user::userName, &user::join,
     &user::msg, &user::kick, &user::invite, &user::defTopic, &user::mode,
-    &user::ping, &user::leave, &user::who}; 
-    while (i < 11 && _command[0] != call[i])
+    &user::ping, &user::leave, &user::who, &user::list}; 
+    while (i < 12 && _command[0] != call[i])
         i++;
-    if (i < 11)
+    if (i < 12)
         (user->*ptr[i])();
     else
         msgToCurrent(user, input);
@@ -245,16 +244,12 @@ void   server::onlyOne(user * user, std::string input)
 {
     if (input == "QUIT")
         quit(user);
-    if (input == "channel")
-        printChannelInfo();
-    if(input == "alluser")
-        printInfoUsers();
     int i = 0;
-    std::string call[6] = {"info", "HELP", "WHO", "LIST", "PART", "TOPIC"};
-    void (user::*ptr[6])() = {&user::info, &user::help, &user::who, &user::list, &user::leave, &user::topic};
-    while (i < 6 && input != call[i])
+    std::string call[3] = {"info", "WHO", "LIST"};
+    void (user::*ptr[3])() = {&user::info, &user::who, &user::list};
+    while (i < 3 && input != call[i])
         i++;
-    if (i < 6)
+    if (i < 3)
         (user->*ptr[i])();
     else
         msgToCurrent(user, input);
@@ -343,8 +338,6 @@ void    server::manageMsg(int clientFd, std::string input)
         parsingMsg(currUser, input);
         if (input == "QUIT :leaving")
             return ;
-        if (input != "PING " + name) 
-            infoClient(currUser->getClientFd());
     }
     else
         std::cout << "curr User is null !!!!" << std::endl;
@@ -377,6 +370,7 @@ bool    server::manageUser(int clientFd, std::string input)
         _userinfo = true;
         welcome(clientFd);
         _required = false;
+        infoClient(clientFd);
         return (true);
     }
     else
@@ -399,12 +393,6 @@ bool    server::checkNick(std::string nickInfo, int clientFd)
             sendForInfo(clientFd, ERR_ERRONEUSNICKNAME, (nickname + " :Erroneous nickname"));
             return (false);
         }
-        // if (isValidNickname(nickname) == false)
-        // {
-        //     sendForInfo(clientFd, ERR_NICKNAMEINUSE, (nickname + " :Nickname is already in use"));
-        //     _wrongNick = true;
-        //     return (false);
-        // }
     }
     else
     {
@@ -555,9 +543,6 @@ void    server::manageBuff(std::string input, int i)
     {
        std::string completeMsg = input.substr(0, pos);
        input.erase(0, pos + 2);
-    //    if (isValidNickname(completeMsg))
-        // if (_wrongNick == true)
-        //     return ;
         if (_checkPass == false)
         {
             if (checkPassword(_fds[i].fd, completeMsg) == false)
@@ -688,11 +673,6 @@ bool    server::isValidNickname(std::string nickname)
         if (allUserN == nickname)
             return (false);
     }
-    // for (std::vector<std::string>::iterator it = nicknameClient.begin(); it != nicknameClient.end(); it++)
-    // {
-    //     if (*it == nickname)
-    //         return (false);
-    // }
     if (!isalpha(nickname[0]) || nickname[0] == '@')
         return (false);
     return (true);
@@ -742,15 +722,10 @@ user*  server::getUserByFd(int clientFd)
 
 user*   server::getUserByNickname(std::string nickname)
 {
-    std::vector<std::string> list = nicknameClient;
-    int i = 1;
-    for (std::vector<std::string>::iterator it = list.begin(); it != list.end(); it++)
+    for (int i = 1; i <= _nbClient; i++)
     {
-        if (nickname == *it)
-        {
+        if (_userN[i]->getNick() == nickname)
             return (_userN[i]);
-        }
-        i++;
     }
     return (NULL);
 }
@@ -773,10 +748,7 @@ std::vector<std::string>  server::getLogin()
     return (_loginClient);
 }
 
-bool        server::getWrongNick()
-{
-    return (_wrongNick);
-}
+
 user*       server::getUserN(int idx)
 {
    return (_userN[idx]);
@@ -867,6 +839,7 @@ void    server::printChannelInfo()
         for (int i = 1; i <= _nbChannel; i++)
         {
             std::cout << "Channel name : " << channelId[i]->getName() << std::endl;
+            std::cout << "Topic : " << channelId[i]->topic << std::endl;
             std::cout << "Channel nb user : " << channelId[i]->getNbUser() << std::endl;
             for (int j = 1; j <= channelId[i]->getNbUser(); j++)
             {  

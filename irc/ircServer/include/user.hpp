@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/26 08:42:52 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/26 15:22:36 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,6 @@ class user
     public:
 
                 user(server & srv, int clientFd, std::vector<std::string> command);
-                // user(server & srv, int clientFd);
                 ~user();
 
 
@@ -94,11 +93,9 @@ class user
                 std::string     getHostname(void);
                 std::string     getReal();
                 bool            getInChannel(void);
-                // bool            getOpChannel(void);
 
                 void            setIdx(int idx);
                 void            decrementIdx(void);
-                // void            setOpchannel(bool op);
                 void            setNickname(std::string nickname);
                 void            registerChannel(std::string name, channel * channel);
                 int             checkChannel2(std::string name);
@@ -124,12 +121,5 @@ class user
                         virtual const char* what() const throw();
                 };
 };
-
-// template <typename T> std::string toStr(T tmp)
-// {
-//     std::ostringstream out;
-//     out << tmp;
-//     return out.str();
-// }
 
 #endif

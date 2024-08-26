@@ -14,9 +14,9 @@
 
 user::user(server& srv, int clientFd, std::vector<std::string> command): _server(srv), _clientFd(clientFd), _inChannel(false)
 {
-    // std::cout << "User construct" << std::endl;
     addInfo(command);
     _server.setLogin(_username);
+    _server.nicknameClient.push_back(_nickname);
 }
 
 user::~user()
@@ -64,7 +64,7 @@ void    user::processNick(std::vector<std::string> command, size_t& i)
     size_t pos = command[i].find(" ");
     if (pos != std::string::npos)
         _nickname = command[i].substr(pos + 1);
-    if (isValidNickname(_nickname) == false)
+    if (_server.isValidNickname(_nickname) == false)
         _nickname = _nickname + toStr(_clientFd);
     i++;
 }
@@ -106,6 +106,7 @@ void    user::info()
     else
         channel = "\nYou re in the channel : " + _currChannel + "\r\n";
     _server.sendMessage(this, NOCODE, msg + channel);
+    user::help();
 }
 
 void    user::nick()
@@ -220,6 +221,7 @@ void    user::leave()
         for (int i = 1; i <= curr->getNbUser(); i++)
             _server.SendSpeMsg(this, curr->getUserN(i), "PART " + _currChannel);
         _currChannel = "No channel";
+        _server.infoClient(_clientFd);
     }
 }
 
@@ -270,6 +272,7 @@ void    user::msg()
             message += _server.getCommand()[i];
             message += " ";
         }
+        message.erase(0, 1);
         if (!checkNicknameList(nickname))
             _server.sendMessage(this, ERR_NOSUCKNICK, "No such nick\r\n");
         else
@@ -391,15 +394,8 @@ void    user::defTopic()
         for (int i = 1; i <= curr->getNbUser(); i++)
         {
             _server.sendMessage(curr->getUserN(i), RPL_TOPIC, (channelName + " :" + newTopic));
-            _server.sendMessage(curr->getUserN(i), RPL_TOPICWHOTIME, (newTopic + " " + _nickname + " " + curr->createTime));
+            _server.sendMessage(curr->getUserN(i), RPL_TOPICWHOTIME, (channelName + " " + _nickname + " " + curr->createTime));
         }
-    }
-    else
-    {
-        std::string channelName = _server.getCommand()[1];
-        channel * curr = getChannelByName(channelName);
-        (void)curr;
-        
     }
 }
 void    user::ping()
@@ -417,10 +413,14 @@ void    user::mode()
 std::string     user::mergeCommand(std::vector<std::string> command)
 {
     std::string result;
-    for (std::vector<std::string>::iterator it = command.begin(); it != command.end(); it++)
+    size_t i = 2;
+    while(i <= command.size() - 2)
     {
-        result += (*it + " ");
+        result += command[i] + " ";
+        i++;
     }
+    result += command[i];
+    result.erase(0, 1);
     return (result);
 }
 
@@ -454,13 +454,14 @@ void    user::createNewChannel(std::string name)
     _server.channelId[newChannel->getIdx()] = newChannel;
     _server.sendMessage(this, RPL_TOPIC, (name + " " + newChannel->topic));
     std::string time = newChannel->createTime;
-    _server.groupMsg(this, RPL_TOPICWHOTIME, newChannel, "test");
-    // _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + this->getNick() + " " + time));
+    // _server.groupMsg(this, RPL_TOPICWHOTIME, newChannel, "test");
+    _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + this->getNick() + " " + time));
     _server.sendMessage(this, RPL_NAMREPLY, ("= " + name + " :@" + this->getNick()));
     _server.sendMessage(this, RPL_ENDOFNAMES, (name + " :End of /NAMES list"));
     registerChannel(name, newChannel);
     if(_nickname[0] != '@')
         _nickname =  "@" + _nickname;
+    _server.infoClient(_clientFd);
 }
 
 void    user::joinChannel(std::string name)
@@ -481,6 +482,7 @@ void    user::joinChannel(std::string name)
     _server.sendMessage(this, RPL_NAMREPLY, ("= " + name + " :" + curr->getNameOperator() + this->getNick()));
     for (int i = 1; i <= curr->getNbUser(); i++)
         _server.SendSpeMsg(this, curr->getUserN(i), ("JOIN :" + name));
+    _server.infoClient(_clientFd);
 
 }
 
@@ -609,11 +611,6 @@ bool    user::inviteCommandCheck(std::string channel)
         _server.sendMessage(this, ERR_UNKNOWNCOMMAND, " :Unknow command\r\n");
         return (false);
     }
-    // if (channel != _currChannel)
-    // {
-    //     _server.sendMessage(this, ERR_NOTONCHANNEL, (channel + " :You're not on that channel\r\n"));
-    //     return (false);
-    // }
     if (_nickname[0] != '@')
     {
         _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, (channel + " :You're not channel operator\r\n"));
@@ -682,8 +679,6 @@ channel*     user::getChannelByName(std::string name)
         {
             if (_server.channelId[i]->getName() == name)
                 return (channelUser[i]);
-            _server.sendMessage(this, ERR_NOSUCHCHANNEL, (name + " :No such channel"));
-            return (NULL);
         }
     }
     _server.sendMessage(this, ERR_NOSUCHCHANNEL, (name + " :No such channel"));

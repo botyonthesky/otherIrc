@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/26 12:08:59 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/26 15:24:03 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,6 @@ class server
         bool                        _checkPass;
         bool                        _userinfo;
         bool                        _required;
-        bool                        _wrongNick;
 
         int                         _nbClient;
         int                         _nbChannel;
@@ -144,7 +143,6 @@ class server
         int                         getNbChannel(void);
         std::vector<std::string>    getCommand(void);
         std::vector<std::string>    getLogin(void);
-        bool                        getWrongNick(void);
 
         void                        setLogin(std::string login);
         void                        setNbChannel(int nb);
