@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 11:57:15 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/26 15:22:36 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/27 14:58:38 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ class user
                 std::string             _hostname;
                 std::string             _currChannel;
                 bool                    _clientRegister;
+                bool                    _isOperator;
 
     public:
 
@@ -72,6 +73,7 @@ class user
  
                 void            info(void);
                 void            who(void);
+                void            whois(void);
                 void            list(void);
                 void            quit(void);
                 void            help(void);
@@ -79,11 +81,19 @@ class user
 
                 void            speCommandOp(void);
                 std::string     mergeCommand(std::vector<std::string> command);
+
+
+                channel*        channelUser[MAXCHANNEL];
+                channel*        getChannelByIdx(int idx);
+                channel*        getChannelByName(std::string name); 
+                void            createNewChannel(std::string name);
+                void            joinChannel(std::string name);
+                void            registerChannel(std::string name, channel * channel);
+                int             checkChannel2(std::string name);
                 int             privOrChan(std::string input);
                 bool            isValidChannel(std::string name);
-
-
-
+                bool            isValidAttribut(std::string attribut);
+                bool            isValidArgv(std::string attribut, std::vector<std::string> command);
                 
                 int             getClientFd(void);
                 int             getIdx(void);
@@ -91,21 +101,16 @@ class user
                 std::string     getNick(void);
                 std::string     getCurrChannel(void);
                 std::string     getHostname(void);
-                std::string     getReal();
+                std::string     getReal(void);
+                server&         getServer(void);
                 bool            getInChannel(void);
+                bool            getIsOpe(void);                        
 
+                void            setIsOpe(bool value);
                 void            setIdx(int idx);
                 void            decrementIdx(void);
                 void            setNickname(std::string nickname);
-                void            registerChannel(std::string name, channel * channel);
-                int             checkChannel2(std::string name);
-                
-                channel*        channelUser[MAXCHANNEL];
-                channel*        getChannelByIdx(int idx);
-                channel*        getChannelByName(std::string name); 
-                void            createNewChannel(std::string name);
-                void            joinChannel(std::string name);
-
+               
                 class NotValidUserName : public std::exception
                 {
                         virtual const char* what() const throw();

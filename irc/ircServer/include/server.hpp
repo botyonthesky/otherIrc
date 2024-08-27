@@ -6,15 +6,14 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 14:37:25 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/26 15:24:03 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/27 15:02:50 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "../include/main.hpp"
-#include <fcntl.h>
+#include "main.hpp"
 
 #define MAXCLIENT 10
 #define MAXCHANNEL 3
@@ -40,13 +39,12 @@ class server
         std::string                 _port;
         std::string                 _password;
         std::string                 _createTime;
-        
-        bool                        _checkPass;
-        bool                        _userinfo;
-        bool                        _required;
-
         int                         _nbClient;
         int                         _nbChannel;
+        bool                        _userinfo;       
+        bool                        _checkPass;
+
+        bool                        _required;
 
         int                                     _idxClient[MAXCLIENT];
         user*                                   _userN[MAXCLIENT];
@@ -79,13 +77,12 @@ class server
         void    waitingClient(void);
         void    readingClient(int i);
         void    manageBuff(std::string input, int i);
-        bool    manageUserInfo(int clientFd, std::string input);
-        bool    manageNickInfo(int clienFd, std::string input);
         bool    manageUser(int clientFd, std::string input);
-        bool    manageNick(int clientFd, std::string nickname);
 
         bool    isValidUsername(std::string username);
         bool    isValidNickname(std::string nickname);
+        bool    isNicknameExist(std::string nickame);
+
         bool    checkNick(std::string nickInfo, int clientFd);
 
         void    infoRequired(int clientFd);
@@ -99,12 +96,12 @@ class server
         user*   getUserN(int idx);
         void    onlyOne(user * user, std::string input);
         void    manageMsg(int clientFd, std::string input);
-        void    sendMessage(user * user, std::string numCode, std::string message);
+        void    sendMessage(user * userId, std::string numCode, std::string message);
         void    readingClientFirst(int clientFd);
         void    checkRequired(int clientFd, std::string input);
         void	timestamp();
         void    welcome(int clientFd);
-
+        void    sendToFd(int clientFd, std::string message);
         void    SendSpeMsg(user * userId, user * toSend, std::string msg);
         void    groupMsg(user * userId, std::string code, channel * channelId, std::string msg);
 

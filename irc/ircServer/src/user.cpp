@@ -15,6 +15,7 @@
 user::user(server& srv, int clientFd, std::vector<std::string> command): _server(srv), _clientFd(clientFd), _inChannel(false)
 {
     addInfo(command);
+    _isOperator = false;
     _server.setLogin(_username);
     _server.nicknameClient.push_back(_nickname);
 }
@@ -22,7 +23,7 @@ user::user(server& srv, int clientFd, std::vector<std::string> command): _server
 user::~user()
 {
     _server.delUserList(this);
-    std::cout << this->_username << " has quit the server" << std::endl;
+    std::cout << this->_nickname << " has quit the server" << std::endl;
 }
 
 void    user::addInfo(std::vector<std::string> command)
@@ -201,10 +202,7 @@ void    user::join()
 void    user::leave()
 {
    if (_currChannel == "No channel")
-    {
-        std::string msg = "Nochannel : You're not on that channel\r\n";
-        _server.sendMessage(this, ERR_NOTONCHANNEL, msg);
-    }
+        return ;
     else
     {
         channel * curr = getChannelByName(_currChannel);
@@ -217,9 +215,6 @@ void    user::leave()
         for (int i = 1; i <= curr->getNbUser(); i++)
             _server.SendSpeMsg(this, curr->getUserN(i), msg);
         _server.checkChannel(_currChannel);
-        _server.SendSpeMsg(this, this, ("PART " + _currChannel));
-        for (int i = 1; i <= curr->getNbUser(); i++)
-            _server.SendSpeMsg(this, curr->getUserN(i), "PART " + _currChannel);
         _currChannel = "No channel";
         _server.infoClient(_clientFd);
     }
@@ -236,7 +231,6 @@ void    user::who()
         if (curr == NULL)
         {
             std::cerr << "Error on /who" << std::endl;
-     
             return ;
         }
         for (int i = 1; i <= curr->getNbUser(); i++)
@@ -303,8 +297,22 @@ void    user::msg()
                 _server.sendMessage(this, ERR_NOTONCHANNEL, " :You're not on that channel");
                 return ;
             }
-            for (int i = 1; i <= curr->getNbUser(); i++)
-                _server.SendSpeMsg(this, curr->getUserN(i), ("PRIVMSG " + name + " " + message));
+            if (curr->getNbUser() == 1)
+                return ;
+            else
+            {
+                int i = 1;
+                while (i <= curr->getNbUser())
+                {
+                    if (curr->getUserN(i)->getNick() == this->_nickname)
+                    {
+                        i++;
+                        continue;
+                    }
+                    _server.SendSpeMsg(this, curr->getUserN(i), ("PRIVMSG " + name + " " + message));
+                    i++;
+                }
+            }
         }
     }
 }
@@ -404,10 +412,114 @@ void    user::ping()
 }
 void    user::mode()
 {
-//    if (_server.getCommand().size() != 3)
-//    {
-//         std::cout << "mode" << std::endl;
-//    } 
+    if (_nickname[0] != '@')
+        _server.sendMessage(this, ERR_CHANOPRIVSNEEDED, " :You're not channel operator");
+    else if (_server.getCommand().size() < 3 || _server.getCommand().size() > 4)
+        _server.sendMessage(this, ERR_NEEDMOREPARAMS, " MODE: Not enought parameters");
+    else
+    {
+        std::string channelName = _server.getCommand()[1];
+        std::string attribut = _server.getCommand()[2];
+        if (isValidChannel(channelName) == false)
+            _server.sendMessage(this, ERR_NOSUCHCHANNEL, " :No such channel");
+        else if (isValidAttribut(attribut) == false)
+            _server.sendMessage(this, ERR_UNKNOWNCOMMAND, (attribut + " :is unknownm mode char to me for " + channelName));
+        else if (isValidArgv(attribut, _server.getCommand()) == false)
+            return;
+        else
+        {
+            channel * curr = getChannelByName(channelName);
+            if (curr == NULL)
+                _server.sendMessage(this, ERR_NOSUCHCHANNEL, " :No such channel");
+            curr->applyMode(attribut);
+        }
+        return;
+    }
+    return ;
+}
+
+bool    user::isValidArgv(std::string attribut, std::vector<std::string> command)
+{
+    if (attribut == "+k" || attribut == "-k")
+    {
+        if (command.size() >= 4)
+        {
+            if (command[3].size() > 16)
+            {
+                _server.sendMessage(this, NOCODE, " :Too long pasword, max 16 caracteres");
+                return (false);
+            }
+            return (true);
+        }
+        else
+        {
+            _server.sendMessage(this, ERR_NEEDMOREPARAMS, " :Not enough parameters");
+            return (false);
+        }
+    }
+    if (attribut == "+o" || attribut == "-o")
+    {
+        if (command.size() >= 4)
+        {
+            std::string nickname = command[3];
+            if (_server.isNicknameExist(nickname) == false)
+            {
+                _server.sendMessage(this, ERR_NOSUCKNICK, " :No such nickname");
+                return (false);
+            }
+            return (true);
+        }
+        else
+        {
+            _server.sendMessage(this, ERR_NEEDMOREPARAMS, " :Not enough parameters");
+            return (false);
+        }
+    }
+    if (attribut == "+l")
+    {
+       if (command.size() >= 4)
+        {
+            std::string infoNb = _server.getCommand()[3];
+            char *end;
+            long nb = std::strtol(infoNb.c_str(), &end, 10);
+            if (nb <= 0 || nb > MAXCLIENT)
+            {
+                _server.sendMessage(this, ERR_UNKNOWNMODE, " :Invalid command");
+                return (false);
+            }
+            return (true);
+        }
+        else
+        {
+            _server.sendMessage(this, ERR_NEEDMOREPARAMS, " :Not enough parameters");
+            return (false);
+        }
+    }
+    if (attribut == "-l")
+    {
+        if (command.size() == 3)
+            return (true);
+        else
+        {
+            _server.sendMessage(this, ERR_NEEDMOREPARAMS, " :Not enough parameters");
+            return (false);       
+        }
+    }
+    return (true);
+}
+
+bool    user::isValidAttribut(std::string attribute)
+{
+    if (attribute[0] == '+' || attribute[0] == '-'
+        || attribute[1] == 'i' || attribute[1] == 't'
+        || attribute[1] == 'k' || attribute[1] == 'o' || attribute[1] == 'l')
+        return (true);
+    else
+        return (false);
+}
+void    user::whois()
+{
+    return ;
 }
 
 std::string     user::mergeCommand(std::vector<std::string> command)
@@ -446,7 +558,7 @@ bool    user::topicCommandCheck(std::string channel)
 
 void    user::createNewChannel(std::string name)
 {
-    channel *newChannel = new channel(this, name);
+    channel *newChannel = new channel(_server, this, name);
     _inChannel = true;
     _currChannel = name;
     _server.setNbChannel(1);
@@ -454,13 +566,13 @@ void    user::createNewChannel(std::string name)
     _server.channelId[newChannel->getIdx()] = newChannel;
     _server.sendMessage(this, RPL_TOPIC, (name + " " + newChannel->topic));
     std::string time = newChannel->createTime;
-    // _server.groupMsg(this, RPL_TOPICWHOTIME, newChannel, "test");
     _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + this->getNick() + " " + time));
     _server.sendMessage(this, RPL_NAMREPLY, ("= " + name + " :@" + this->getNick()));
     _server.sendMessage(this, RPL_ENDOFNAMES, (name + " :End of /NAMES list"));
     registerChannel(name, newChannel);
     if(_nickname[0] != '@')
         _nickname =  "@" + _nickname;
+    _isOperator = true;
     _server.infoClient(_clientFd);
 }
 
@@ -477,7 +589,6 @@ void    user::joinChannel(std::string name)
         _nickname = "@" + _nickname;
     _server.sendMessage(this, RPL_TOPIC, (name + " " + curr->topic + "\r\n"));
     std::string op = curr->getNameOperator();
-    _server.groupMsg(this, RPL_TOPICWHOTIME, curr, "test");
     _server.sendMessage(this, RPL_TOPICWHOTIME, (name + " " + op + " " + curr->createTime + "\r\n"));
     _server.sendMessage(this, RPL_NAMREPLY, ("= " + name + " :" + curr->getNameOperator() + this->getNick()));
     for (int i = 1; i <= curr->getNbUser(); i++)
@@ -734,6 +845,21 @@ std::string    user::getHostname()
 std::string     user::getReal()
 {
     return (_realName);
+}
+
+server&         user::getServer()
+{
+    return (_server);
+}
+
+bool        user::getIsOpe()
+{
+    return (_isOperator);
+}
+
+void        user::setIsOpe(bool value)
+{
+    _isOperator = value;
 }
 
 void    user::setNickname(std::string nickname)

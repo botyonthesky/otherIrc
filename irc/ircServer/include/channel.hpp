@@ -6,7 +6,7 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:16:40 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/26 10:12:55 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/27 15:31:25 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,21 +16,30 @@
 #include "main.hpp"
 
 class user;
+class server;
 
 class channel
 {
     private:
         
+        server&             _server;
         std::string         _name;
         int                 _idx;
         int                 _idxUser;
         int                 _nbUsers;
         user*               _userN[MAXCLIENT];
         std::string         _nameOperator;
+        bool                _onInvitOnly;
+        bool                _topicForOpOnly;
+        bool                _onPassWordOnly;
+        bool                _maxUserChannel;
+        int                 _nbClientChannel;
+        
+        std::string         _password;
 
     public:
         
-        channel(user * user, std::string name);
+        channel(server & srv, user * user, std::string name);
         ~channel();
 
 
@@ -40,6 +49,14 @@ class channel
         bool            isValidChannelName(std::string name);
         void            majIdxUserChannel(void);
         void	        timestamp(void);
+        void            applyMode(std::string attribute);
+
+        void            modei(void);
+        void            modet(void);
+        void            modek(void);
+        void            modeo(void);
+        void            model(void);
+
         std::string     getName(void);
         int             getIdx(void);
         int             getIdxUser(void);

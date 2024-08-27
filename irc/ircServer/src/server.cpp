@@ -12,13 +12,11 @@
 
 #include "../include/main.hpp"
 
-server::server(std::string port, std::string password) : _port(port), _password(password), _nbClient(0), _nbChannel(0)
+server::server(std::string port, std::string password) : _port(port),
+_password(password), _nbClient(0), _nbChannel(0), _userinfo(false),
+_checkPass(false), _required(false), name("myIRC")
 {
     timestamp();
-    name = "myIRC";
-    _userinfo = false;
-    _checkPass = false;
-    _required = false;
 }
 
 server::~server()
@@ -31,7 +29,6 @@ server::~server()
     }
     for (int i = 0; i < _nfds; i++)
     {
-
         close(_fds[i].fd);
         _fds[i].fd = -1;
     }
@@ -137,81 +134,37 @@ void    server::quit(user * user)
 void    server::sendForInfo(int clientFd, std::string code, std::string message)
 {
     std::string msg;
-    int msgSize;
     if (code == NOCODE)
         msg = message;   
     else
         msg = ":" + name + " " + code + " " + message + "\r\n";
-    msgSize = msg.size();
-    int bytesSend = send(clientFd, msg.c_str(), msgSize, 0);
-    if (bytesSend == -1)
-    {
-        initError ex("send");
-        throw ex;
-    }
-    else if (bytesSend != msgSize)
-    {
-        std::cout << "Only partial message received by client socket : " << clientFd
-        << ", bytes send = " << bytesSend << std::endl;
-    }
+    sendToFd(clientFd, msg);
 }
 
-void    server::groupMsg(user * userId, std::string code, channel * channelId, std::string msg)
-{
-    (void)msg;
-    std::string sep = " ";
-    if (code == "333")
-    {
-        for (int i = 1; i <= channelId->getNbUser(); i++)
-        {
-            user * toSend = channelId->getUserN(i);
-            std::string message = ":" + name + sep + code + sep + toSend->getNick() + sep
-            + channelId->topic + sep + userId->getNick() + sep + channelId->createTime + "\r\n";
-            int msgSize = message.size();
-            int bytesSend = send(toSend->getClientFd(), message.c_str(), msgSize, 0);
-            if (bytesSend == -1)
-            {
-                initError ex("send");
-                throw ex;
-            }
-            else if (bytesSend != msgSize)
-            {
-                std::cout << "Only partial message received by client socket : " << toSend->getClientFd()
-                << ", bytes send = " << bytesSend << std::endl;
-            }
-        }
-    }
-}
+
 void    server::SendSpeMsg(user * userId, user * toSend, std::string msg)
 {
     std::string sep = " ";
     std::string userMsg = ":" + userId->getNick() + "!" + userId->getUsername() + "@" + userId->getHostname() + sep + msg + "\r\n";
-    int msgSize = userMsg.size();
-    int bytesSend = send(toSend->getClientFd(), userMsg.c_str(), msgSize, 0);
-    if (bytesSend == -1)
-    {
-        initError ex("send");
-        throw ex;
-    }
-    else if (bytesSend != msgSize)
-    {
-        std::cout << "Only partial message received by client socket : " << toSend->getClientFd()
-        << ", bytes send = " << bytesSend << std::endl;
-    }
+    sendToFd(toSend->getClientFd(), userMsg);
 }
 
-void    server::sendMessage(user * user, std::string numCode, std::string message)
+void    server::sendMessage(user * userId, std::string numCode, std::string message)
 {
     std::string userMsg;
     if (numCode != NOCODE)
     {
         std::string sep = " ";
-        userMsg = ":" + name + sep + numCode + sep + user->getNick() + sep + message + "\r\n";
+        userMsg = ":" + name + sep + numCode + sep + userId->getNick() + sep + message + "\r\n";
     }
     else
         userMsg = message + "\r\n";
-    int msgSize = userMsg.size();
-    int bytesSend = send(user->getClientFd(), userMsg.c_str(), msgSize, 0);
+    sendToFd(userId->getClientFd(), userMsg);
+}
+void    server::sendToFd(int clientFd, std::string message)
+{
+    int msgSize = message.size();
+    int bytesSend = send(clientFd, message.c_str(), msgSize, 0);
     if (bytesSend == -1)
     {
         initError ex("send");
@@ -223,18 +176,19 @@ void    server::sendMessage(user * user, std::string numCode, std::string messag
         << ", bytes send = " << bytesSend << std::endl;
     }
 }
+
 void    server::manageInput(user * user, std::string input)
 {
     parsingCommand(input);
     int i = 0;
-    std::string call[12] = {"NICK", "userhost", "JOIN", "PRIVMSG", "KICK",
-    "INVITE", "TOPIC", "MODE", "PING", "PART", "WHO", "LIST"};
-    void (user::*ptr[12])() = {&user::nick, &user::userName, &user::join,
+    std::string call[13] = {"NICK", "userhost", "JOIN", "PRIVMSG", "KICK",
+    "INVITE", "TOPIC", "MODE", "PING", "PART", "WHO", "WHOIS", "LIST"};
+    void (user::*ptr[13])() = {&user::nick, &user::userName, &user::join,
     &user::msg, &user::kick, &user::invite, &user::defTopic, &user::mode,
-    &user::ping, &user::leave, &user::who, &user::list}; 
-    while (i < 12 && _command[0] != call[i])
+    &user::ping, &user::leave, &user::who, &user::whois, &user::list}; 
+    while (i < 13 && _command[0] != call[i])
         i++;
-    if (i < 12)
+    if (i < 13)
         (user->*ptr[i])();
     else
         msgToCurrent(user, input);
@@ -273,6 +227,8 @@ void    server::sendMsgToChanFromUser(channel * channel, user * user, std::strin
     {
         std::string from = user->getNick();
         std::string msg = "<" + from + "> " + input + "\r\n";
+        if (channel->getUserN(i)->getNick() == user->getNick())
+            i++;
         sendMessage(channel->getUserN(i), NOCODE, msg);
         i++;
     }
@@ -340,7 +296,7 @@ void    server::manageMsg(int clientFd, std::string input)
             return ;
     }
     else
-        std::cout << "curr User is null !!!!" << std::endl;
+        std::cout << "Error on UserN" << std::endl;
 }
 
 
@@ -368,8 +324,8 @@ bool    server::manageUser(int clientFd, std::string input)
         newUser->setIdx(_nbClient);
         _userN[_nbClient] = newUser;
         _userinfo = true;
-        welcome(clientFd);
         _required = false;
+        welcome(clientFd);
         infoClient(clientFd);
         return (true);
     }
@@ -399,7 +355,6 @@ bool    server::checkNick(std::string nickInfo, int clientFd)
         sendForInfo(clientFd, ERR_NONICKNAMEGIVEN, " :No nickname given");
         return (false);
     }
-
     return (true);
 }
 
@@ -461,7 +416,6 @@ void server::waitingClient()
     _nfds = 1;
     _fds[0].fd = _socketFd;
     _fds[0].events = POLLIN;
-
     while (true)
     {
         int pollCount = poll(_fds, _nfds, -1);
@@ -684,7 +638,15 @@ bool    server::isValidUsername(std::string username)
         return (false);
     return (true);
 }
-
+bool    server::isNicknameExist(std::string nickname)
+{
+    for (std::vector<std::string>::iterator it = nicknameClient.begin(); it != nicknameClient.end(); it++)
+    {
+        if (*it == nickname)
+            return (true);
+    }
+    return (false);
+}
 int     server::getFdClientByNick(std::string nickname)
 {
     int fd;
@@ -888,3 +850,18 @@ const char* server::initError::what() const throw()
     return (_error);
 }
 
+void    server::groupMsg(user * userId, std::string code, channel * channelId, std::string msg)
+{
+    (void)msg;
+    std::string sep = " ";
+    if (code == "333")
+    {
+        for (int i = 1; i <= channelId->getNbUser(); i++)
+        {
+            user * toSend = channelId->getUserN(i);
+            std::string message = ":" + name + sep + code + sep + toSend->getNick() + sep
+            + channelId->topic + sep + userId->getNick() + sep + channelId->createTime + "\r\n";
+            sendToFd(toSend->getClientFd(), message);
+        }
+    }
+}

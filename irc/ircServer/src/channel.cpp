@@ -6,13 +6,13 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/30 17:18:47 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/26 10:20:59 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/27 15:32:26 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/main.hpp"
 
-channel::channel(user * user, std::string name) : _nbUsers(0)
+channel::channel(server & srv, user * user, std::string name) : _server(srv), _nbUsers(0)
 {
     try
     {
@@ -21,7 +21,9 @@ channel::channel(user * user, std::string name) : _nbUsers(0)
         _idxUser = _nbUsers;
         _userN[_idxUser] = user;
         _nameOperator = user->getNick();
-
+        _onInvitOnly = false;
+        _topicForOpOnly = false;
+        _onPassWordOnly = false;
         topic = "General";
         timestamp();
     }
@@ -118,6 +120,102 @@ void    channel::majIdxUserChannel()
     }
         
 }
+
+void    channel::applyMode(std::string attribute)
+{
+    std::string call[10] = {"+i", "-i", "+t", "-t", "+k", "-k", "+o", "-o", "+l", "-l"};
+    void (channel::*ptr[10])() = {&channel::modei, &channel::modei,
+    &channel::modet, &channel::modet, &channel::modek, &channel::modek,
+    &channel::modeo, &channel::modeo, &channel::model, &channel::model};
+    int i = 0;
+    while (i < 10 && attribute != call[i])
+        i++;
+    if (i < 10)
+        (this->*ptr[i])();
+    return ;
+}
+
+void    channel::modei()
+{
+    std::cout << "modei" << std::endl;
+    std::string attribut = _server.getCommand()[2];
+    if (attribut[0] == '+')
+        this->_onInvitOnly = true;
+    else if (attribut[0] == '-')
+        this->_onInvitOnly = false;
+}
+
+void    channel::modet()
+{
+    std::cout << "modet" << std::endl;   
+    std::string attribut = _server.getCommand()[2];
+    if (attribut[0] == '+')
+        this->_topicForOpOnly = true;
+    else if(attribut[0] == '-')
+        this->_topicForOpOnly = false;
+   
+}
+
+void    channel::modek()
+{
+    std::cout << "modek" << std::endl;
+    std::string attribut = _server.getCommand()[2];
+    std::string pass = _server.getCommand()[3];
+    if (attribut[0] == '+')
+    {
+        _onPassWordOnly = true;
+        _password = pass;
+    }
+    else if (attribut[0] == '-')
+    {
+        _onPassWordOnly = false;
+    }
+
+}
+
+void    channel::modeo()
+{
+    std::cout << "modeo" << std::endl;
+    std::string attribut = _server.getCommand()[2];
+    std::string nickname = _server.getCommand()[3];
+    if (attribut[0] == '+')
+    {
+        for (int i = 1; i <= _nbUsers; i++)
+        {
+            if (_userN[i]->getNick() == nickname)
+                _userN[i]->setIsOpe(true);
+        }
+    }
+    else if (attribut[0] == '-')
+    {
+        for (int i = 1; i <= _nbUsers; i++)
+        {
+            if (_userN[i]->getNick() == nickname)
+                _userN[i]->setIsOpe(false);
+        }
+    }
+}
+
+
+void    channel::model()
+{
+    std::cout << "model" << std::endl;
+    std::string attribut = _server.getCommand()[2];
+    if (attribut[0] == '+')
+    {
+        std::string nbs = _server.getCommand()[3];
+        char *end;
+        long nb = std::strtol(nbs.c_str(), &end, 10);
+        _maxUserChannel = true;
+        _nbClientChannel = nb;
+    }
+    if (attribut[0] == '-')
+    {
+        _maxUserChannel = false;
+    }
+
+}
+
 std::string    channel::getNameOperator()
 {
     return (_nameOperator);

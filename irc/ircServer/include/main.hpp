@@ -6,13 +6,14 @@
 /*   By: tmaillar <tmaillar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/29 13:07:04 by botyonthesk       #+#    #+#             */
-/*   Updated: 2024/08/26 09:03:02 by tmaillar         ###   ########.fr       */
+/*   Updated: 2024/08/27 15:18:20 by tmaillar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef MAIN_HPP
 #define MAIN_HPP
 
+#include <cstdlib>
 #include <cerrno>
 #include <poll.h>
 #include <netinet/in.h>
@@ -31,7 +32,7 @@
 #include <sys/time.h>
 #include <ctime>
 #include <netinet/in.h>
-#include <netinet/tcp.h> // Pour TCP_NODELAY
+#include <netinet/tcp.h> 
 #include <arpa/inet.h>
 #include <map>
 
@@ -89,6 +90,9 @@
 
 #define ERR_NEEDMOREPARAMS "461"
 #define ERR_PASSWDMISMATCH "464"
+
+#define ERR_UNKNOWNMODE "472"
+
 #define ERR_CHANOPRIVSNEEDED "482"
 
         
